@@ -18,19 +18,22 @@ process fasterq_dump {
     val(sra_accession) from accessions_channel
 
     output:
-    set val(sra_accession), file("${sra_accession}*.fastq") into reads
+    set val(sra_accession), file("${sra_accession}*.fastq") into reads_into_two_channels
 
     """
     fasterq-dump ${sra_accession}
     """
 }
 
+// create two separate channels
+reads_into_fastqc, reads_into_trimmomatic = reads_into_two_channels.into(2)
+
 process fastqc {
     tag "$name"
     container 'fastqc_trimmomatic:latest'
     
     input:
-    set val(name), file(reads) from reads
+    set val(name), file(reads) from reads_into_fastqc
 
     output:
     file "*_fastqc.{zip,html}" into fastqc_results
@@ -46,7 +49,7 @@ process trimmomatic {
     container 'fastqc_trimmomatic:latest'
     
     input:
-    set val(name), file(reads) from reads
+    set val(name), file(reads) from reads_into_trimmomatic
     
     output:
     set val(name), file("*_{1,2}.fastq.gz") into trimmed_reads
