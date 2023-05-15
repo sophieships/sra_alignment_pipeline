@@ -1,0 +1,97 @@
+May-14 15:17:46.712 [main] DEBUG nextflow.cli.Launcher - $> nextflow run main.nf --sra_accession SRR11715650
+May-14 15:17:46.740 [main] INFO  nextflow.cli.CmdRun - N E X T F L O W  ~  version 22.10.7
+May-14 15:17:46.751 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/Users/eloksen/.nextflow/plugins; core-plugins: nf-amazon@1.11.4,nf-azure@0.14.2,nf-codecommit@0.1.2,nf-console@1.0.4,nf-ga4gh@1.0.4,nf-google@1.4.5,nf-tower@1.5.6,nf-wave@0.5.4
+May-14 15:17:46.756 [main] INFO  org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+May-14 15:17:46.756 [main] INFO  org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+May-14 15:17:46.758 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.4.1 in 'deployment' mode
+May-14 15:17:46.763 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+May-14 15:17:46.771 [main] DEBUG nextflow.config.ConfigBuilder - Found config local: /Users/eloksen/Library/Mobile Documents/com~apple~CloudDocs/Projects/sra_alignment_pipeline/nextflow.config
+May-14 15:17:46.772 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /Users/eloksen/Library/Mobile Documents/com~apple~CloudDocs/Projects/sra_alignment_pipeline/nextflow.config
+May-14 15:17:46.785 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+May-14 15:17:47.045 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=1 by probing script field
+May-14 15:17:47.056 [main] INFO  nextflow.cli.CmdRun - Launching `main.nf` [compassionate_celsius] DSL1 - revision: a5d197837e
+May-14 15:17:47.056 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+May-14 15:17:47.056 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[]
+May-14 15:17:47.062 [main] DEBUG nextflow.secret.LocalSecretsProvider - Secrets store: /Users/eloksen/.nextflow/secrets/store.json
+May-14 15:17:47.063 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@49faf066] - activable => nextflow.secret.LocalSecretsProvider@49faf066
+May-14 15:17:47.092 [main] DEBUG nextflow.Session - Session UUID: 191e8708-a840-4cc1-a263-46f3909e585d
+May-14 15:17:47.092 [main] DEBUG nextflow.Session - Run name: compassionate_celsius
+May-14 15:17:47.092 [main] DEBUG nextflow.Session - Executor pool size: 12
+May-14 15:17:47.097 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=36; workQueue=LinkedBlockingQueue[10000]; allowCoreThreadTimeout=false
+May-14 15:17:47.118 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 22.10.7 build 5853
+  Created: 18-02-2023 20:32 UTC (15:32 EDT)
+  System: Mac OS X 13.2.1
+  Runtime: Groovy 3.0.13 on OpenJDK 64-Bit Server VM 17.0.7+0
+  Encoding: UTF-8 (UTF-8)
+  Process: 77379@ethans-mbp.lan [192.168.86.24]
+  CPUs: 12 - Mem: 32 GB (69.5 MB) - Swap: 11 GB (592.8 MB)
+May-14 15:17:47.124 [main] DEBUG nextflow.Session - Work-dir: /Users/eloksen/Library/Mobile Documents/com~apple~CloudDocs/Projects/sra_alignment_pipeline/work [Mac OS X]
+May-14 15:17:47.124 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /Users/eloksen/Library/Mobile Documents/com~apple~CloudDocs/Projects/sra_alignment_pipeline/bin
+May-14 15:17:47.132 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+May-14 15:17:47.136 [main] DEBUG nextflow.Session - Observer factory: DefaultObserverFactory
+May-14 15:17:47.144 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+May-14 15:17:47.149 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 13; maxThreads: 1000
+May-14 15:17:47.178 [main] DEBUG nextflow.Session - Session start
+May-14 15:17:47.300 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+May-14 15:17:47.337 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+May-14 15:17:47.337 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+May-14 15:17:47.340 [main] DEBUG nextflow.executor.Executor - [warm up] executor > local
+May-14 15:17:47.342 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=12; memory=32 GB; capacity=12; pollInterval=100ms; dumpInterval=5m
+May-14 15:17:47.372 [main] DEBUG nextflow.Session - Workflow process names [dsl1]: fasterq_dump
+May-14 15:17:47.372 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
+May-14 15:17:47.372 [main] DEBUG nextflow.Session - Session await
+May-14 15:17:47.422 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+May-14 15:17:47.423 [Task submitter] INFO  nextflow.Session - [05/60338a] Submitted process > fasterq_dump (1)
+May-14 15:17:52.234 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 1; name: fasterq_dump (1); status: COMPLETED; exit: 127; error: -; workDir: /Users/eloksen/Library/Mobile Documents/com~apple~CloudDocs/Projects/sra_alignment_pipeline/work/05/60338a9bb998c1e973c35adc275986]
+May-14 15:17:52.243 [Task monitor] ERROR nextflow.processor.TaskProcessor - Error executing process > 'fasterq_dump (1)'
+
+Caused by:
+  Process `fasterq_dump (1)` terminated with an error exit status (127)
+
+Command executed:
+
+  fasterq-dump SRR11715650
+
+Command exit status:
+  127
+
+Command output:
+  (empty)
+
+Command error:
+  Unable to find image 'ncbi/sra-tools:3.0.1' locally
+  3.0.1: Pulling from ncbi/sra-tools
+  6875df1f5354: Pulling fs layer
+  495a7d815057: Pulling fs layer
+  c69c96de88f6: Pulling fs layer
+  708f10860a1c: Pulling fs layer
+  f3954d9360bd: Pulling fs layer
+  708f10860a1c: Waiting
+  f3954d9360bd: Waiting
+  6875df1f5354: Download complete
+  495a7d815057: Download complete
+  708f10860a1c: Verifying Checksum
+  708f10860a1c: Download complete
+  6875df1f5354: Pull complete
+  495a7d815057: Pull complete
+  f3954d9360bd: Download complete
+  c69c96de88f6: Verifying Checksum
+  c69c96de88f6: Download complete
+  c69c96de88f6: Pull complete
+  708f10860a1c: Pull complete
+  f3954d9360bd: Pull complete
+  Digest: sha256:dd7a1e1626a0d004e584d38124a6350ad96f5f23507b8352511f1c1dcfaf4db1
+  Status: Downloaded newer image for ncbi/sra-tools:3.0.1
+  docker: Error response from daemon: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: exec: "/bin/bash": stat /bin/bash: no such file or directory: unknown.
+
+Work dir:
+  /Users/eloksen/Library/Mobile Documents/com~apple~CloudDocs/Projects/sra_alignment_pipeline/work/05/60338a9bb998c1e973c35adc275986
+
+Tip: when you have fixed the problem you can continue the execution adding the option `-resume` to the run command line
+May-14 15:17:52.246 [main] DEBUG nextflow.Session - Session await > all processes finished
+May-14 15:17:52.247 [Task monitor] DEBUG nextflow.Session - Session aborted -- Cause: Process `fasterq_dump (1)` terminated with an error exit status (127)
+May-14 15:17:52.266 [main] DEBUG nextflow.Session - Session await > all barriers passed
+May-14 15:17:52.273 [main] DEBUG nextflow.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=0; failedCount=1; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=0ms; failedDuration=4.8s; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=1; peakCpus=1; peakMemory=0; ]
+May-14 15:17:52.471 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
+May-14 15:17:52.481 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye
