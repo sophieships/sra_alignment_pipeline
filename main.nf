@@ -18,10 +18,9 @@ process fasterq_dump {
     val(sra_accession) from accessions_channel
 
     output:
-    file("${sra_accession}*.fastq")
+    set val(sra_accession), file("${sra_accession}*.fastq") into reads
 
     """
     fasterq-dump ${sra_accession}
     """
 }
-
