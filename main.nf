@@ -24,3 +24,19 @@ process fasterq_dump {
     fasterq-dump ${sra_accession}
     """
 }
+
+process fastqc {
+    tag "$name"
+    container 'fastqc_trimmomatic:latest'
+    
+    input:
+    set val(name), file(reads) from reads
+
+    output:
+    file "*_fastqc.{zip,html}" into fastqc_results
+
+    script:
+    """
+    fastqc -q $reads
+    """
+}
