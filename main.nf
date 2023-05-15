@@ -8,7 +8,7 @@ if (params.sra_accession == '') {
 accessions = params.sra_accession.split(',')
 accessions_channel = Channel.from(accessions)
 
-process fasterq_dump {
+process fastq_dump {
     container 'ncbi/sra-tools:aarch64-3.0.1'
 
     // Specify "/bin/sh" for this container
@@ -18,45 +18,28 @@ process fasterq_dump {
     val(sra_accession) from accessions_channel
 
     output:
-    set val(sra_accession), file("${sra_accession}*.fastq") into reads_into_two_channels
+    set val(sra_accession), file("${sra_accession}_*.fastq.gz") into reads_into_fastp
 
     """
-    fasterq-dump ${sra_accession}
-    """
-}
-
-// create two separate channels
-reads_into_two_channels.into {reads_into_fastqc; reads_into_trimmomatic}
-
-
-process fastqc {
-    tag "$name"
-    container 'fastqc_trimmomatic:latest'
-    
-    input:
-    set val(name), file(reads) from reads_into_fastqc
-
-    output:
-    file "*_fastqc.{zip,html}" into fastqc_results
-
-    script:
-    """
-    fastqc -q $reads
+    fastq-dump --split-3 --skip-technical --gzip ${sra_accession}
     """
 }
 
-process trimmomatic {
-    tag "$name"
-    container 'fastqc_trimmomatic:latest'
-    
+process run_fastp {
+    container 'eoksen/fastp:latest'
+
     input:
-    set val(name), file(reads) from reads_into_trimmomatic
-    
+    set val(name), file(reads) from reads_into_fastp
+
     output:
-    set val(name), file("*_{1,2}.fastq.gz") into trimmed_reads
+    set val(name), file("*_trimmed*.fastq.gz") into trimmed_reads
 
     script:
     """
-    java -jar /usr/local/bin/Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads $task.cpus $reads[0] $reads[1] ${name}_1.fastq.gz ${name}_1_unpaired.fastq.gz ${name}_2.fastq.gz ${name}_2_unpaired.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+    if [[ ${reads.size()} -gt 1 ]]; then
+        fastp -i ${reads[0]} -I ${reads[1]} -o ${name}_trimmed_1.fastq.gz -O ${name}_trimmed_2.fastq.gz
+    else
+        fastp -i ${reads[0]} -o ${name}_trimmed.fastq.gz
+    fi
     """
 }
