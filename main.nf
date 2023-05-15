@@ -32,14 +32,27 @@ process run_fastp {
     set val(name), file(reads) from reads_into_fastp
 
     output:
-    set val(name), file("*_trimmed*.fastq.gz") into trimmed_reads
+    set val(name), file("*_trimmed_{1,2}.fastq.gz") into trimmed_reads
 
     script:
     """
-    if [[ ${reads.size()} -gt 1 ]]; then
-        fastp -i ${reads[0]} -I ${reads[1]} -o ${name}_trimmed_1.fastq.gz -O ${name}_trimmed_2.fastq.gz
-    else
-        fastp -i ${reads[0]} -o ${name}_trimmed.fastq.gz
-    fi
+    fastp -i ${reads[0]} -I ${reads[1]} -o ${name}_trimmed_1.fastq.gz -O ${name}_trimmed_2.fastq.gz
+    """
+}
+
+
+
+process downloadFasta {
+    container 'eoksen/biopython:latest'
+
+    input:
+    val identifierVal from params.identifier
+
+    output:
+    file("${identifierVal}_reference.fasta") into downloadedFasta
+
+    script:
+    """
+    python /scripts/download_fasta.py ${identifierVal}
     """
 }
