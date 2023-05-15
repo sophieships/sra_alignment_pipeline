@@ -26,7 +26,8 @@ process fasterq_dump {
 }
 
 // create two separate channels
-reads_into_two_channels.duplicate() set {reads_into_fastqc, reads_into_trimmomatic}
+reads_into_two_channels.into {reads_into_fastqc; reads_into_trimmomatic}
+
 
 process fastqc {
     tag "$name"
@@ -56,6 +57,6 @@ process trimmomatic {
 
     script:
     """
-    java -jar /usr/local/bin/trimmomatic-0.39.jar PE -threads $task.cpus $reads[0] $reads[1] ${name}_1.fastq.gz ${name}_1_unpaired.fastq.gz ${name}_2.fastq.gz ${name}_2_unpaired.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+    java -jar /usr/local/bin/Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads $task.cpus $reads[0] $reads[1] ${name}_1.fastq.gz ${name}_1_unpaired.fastq.gz ${name}_2.fastq.gz ${name}_2_unpaired.fastq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
     """
 }
