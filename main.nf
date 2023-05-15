@@ -26,7 +26,7 @@ process fasterq_dump {
 }
 
 // create two separate channels
-reads_into_fastqc, reads_into_trimmomatic = reads_into_two_channels.into(2)
+reads_into_two_channels.duplicate() set {reads_into_fastqc, reads_into_trimmomatic}
 
 process fastqc {
     tag "$name"
