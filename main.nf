@@ -49,10 +49,28 @@ process downloadFasta {
     val identifierVal from params.identifier
 
     output:
-    file("${identifierVal}_reference.fasta") into downloadedFasta
+    file("${identifierVal}_reference.fasta.gz") into downloadedFasta
 
     script:
     """
     python /scripts/download_fasta.py ${identifierVal}
+    """
+}
+
+process run_bowtie2 {
+    cpus params.cpus
+    container 'eoksen/bowtie2-arm:latest'
+
+    input:
+    set val(name), file(reads) from trimmed_reads
+    file reference from downloadedFasta
+
+    output:
+    file("${name}.sam") into aligned_reads
+
+    script:
+    """
+    bowtie2-build -f ${reference} ref_index -p ${task.cpus}
+    bowtie2 -p ${task.cpus} -x ref_index -1 ${reads[0]} -2 ${reads[1]} -S ${name}.sam --al ${name}_pair.align --un ${name}_pair.unmapped -L 24 -X 600 --fr -q -t
     """
 }
