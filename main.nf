@@ -44,7 +44,7 @@ process run_fastp {
 
 
 process downloadFasta {
-    container 'eoksen/biopython:latest'
+    container 'eoksen/biopython-pysam:latest'
 
     input:
     val identifierVal from params.identifier
@@ -84,15 +84,20 @@ process run_samtools {
 
     input:
     file(sam_file) from sam_files
+    file(reference) from downloadedFasta
 
     output:
     file("${sam_file.baseName}.sorted.bam") into sorted_bam_files
     file("${sam_file.baseName}.sorted.bam.bai") into bam_index_files
+    file("${reference}.fai") into indexed_references
 
     script:
     """
     samtools view -b ${sam_file} -o ${sam_file.baseName}.bam
     samtools sort -@ ${task.cpus} -o ${sam_file.baseName}.sorted.bam ${sam_file.baseName}.bam
     samtools index ${sam_file.baseName}.sorted.bam
+    samtools faidx ${reference}
     """
 }
+
+
