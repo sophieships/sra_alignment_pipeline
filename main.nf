@@ -102,3 +102,27 @@ process run_samtools {
 }
 
 
+process run_bcftools {
+    cpus params.cpus
+    container 'eoksen/bcftools-1.17-arm:latest'
+
+    input:
+    file(sorted_bam) from sorted_bam_files
+    tuple(file(reference_fasta_gz), file(reference_fai)) from indexed_references
+
+    output:
+    file("calls.vcf.gz") into vcf_files
+    file("consensus.fasta") into consensus_sequences
+
+    script:
+    """
+    # Call variants
+    bcftools mpileup -Ou -f ${reference_fasta_gz} --threads ${task.cpus} ${sorted_bam} | bcftools call -mv -Oz -o calls.vcf.gz
+
+    # Index the variant file
+    bcftools index calls.vcf.gz
+
+    # Generate the consensus sequence
+    zcat ${reference_fasta_gz} | bcftools consensus calls.vcf.gz > consensus.fasta
+    """
+}
