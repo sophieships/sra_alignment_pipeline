@@ -20,6 +20,7 @@ process fastq_dump {
     output:
     set val(sra_accession), file("${sra_accession}_*.fastq.gz") into reads_into_fastp
 
+    script:
     """
     fastq-dump --split-3 --skip-technical --gzip ${sra_accession}
     """
@@ -74,5 +75,24 @@ process run_bowtie2 {
     """
     bowtie2-build -f ${reference} ref_index -p ${task.cpus}
     bowtie2 -p ${task.cpus} -x ref_index -1 ${reads[0]} -2 ${reads[1]} -S ${name}.sam --al ${name}_pair.align --un ${name}_pair.unmapped -L ${params.L} -X ${params.X} --fr -q -t
+    """
+}
+
+process run_samtools {
+    cpus params.cpus
+    container 'eoksen/samtools-arm:latest'
+
+    input:
+    file(sam_file) from sam_files
+
+    output:
+    file("${sam_file.baseName}.sorted.bam") into sorted_bam_files
+    file("${sam_file.baseName}.sorted.bam.bai") into bam_index_files
+
+    script:
+    """
+    samtools view -b ${sam_file} -o ${sam_file.baseName}.bam
+    samtools sort -@ ${task.cpus} -o ${sam_file.baseName}.sorted.bam ${sam_file.baseName}.bam
+    samtools index ${sam_file.baseName}.sorted.bam
     """
 }
