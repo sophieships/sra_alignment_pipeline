@@ -66,11 +66,13 @@ process run_bowtie2 {
     file reference from downloadedFasta
 
     output:
-    file("${name}.sam") into aligned_reads
+    file("${name}.sam") into sam_files
+    file("${name}_pair.align") into aligned_reads
+    file("${name}_pair.unmapped") into unmapped_reads
 
     script:
     """
     bowtie2-build -f ${reference} ref_index -p ${task.cpus}
-    bowtie2 -p ${task.cpus} -x ref_index -1 ${reads[0]} -2 ${reads[1]} -S ${name}.sam --al ${name}_pair.align --un ${name}_pair.unmapped -L 24 -X 600 --fr -q -t
+    bowtie2 -p ${task.cpus} -x ref_index -1 ${reads[0]} -2 ${reads[1]} -S ${name}.sam --al ${name}_pair.align --un ${name}_pair.unmapped -L ${params.L} -X ${params.X} --fr -q -t
     """
 }
