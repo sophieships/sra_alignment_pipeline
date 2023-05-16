@@ -1,11 +1,19 @@
-import sys
 from Bio import Entrez, SeqIO
+import pysam
 
-identifier = sys.argv[1]
+def download_fasta(identifier, email='your.email@example.com'):
+    Entrez.email = email
+    handle = Entrez.efetch(db='nucleotide', id=identifier, rettype='fasta', retmode='text')
+    record = SeqIO.read(handle, 'fasta')
+    handle.close()
+    filename = f"{identifier}_reference.fasta"
+    SeqIO.write(record, filename, 'fasta')
 
-handle = Entrez.efetch(db="nucleotide", id=identifier, rettype="fasta", retmode="text")
-record = SeqIO.read(handle, "fasta")
-handle.close()
+    # Compress the fasta file with bgzip
+    pysam.tabix_compress(filename, filename + '.gz', force=True)
 
-with open(f"{identifier}_reference.fasta", "w") as output_handle:
-    SeqIO.write(record, output_handle, "fasta")
+    return filename
+
+if __name__ == "__main__":
+    import sys
+    download_fasta(sys.argv[1])
