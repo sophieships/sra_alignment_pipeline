@@ -89,7 +89,8 @@ process run_samtools {
     output:
     file("${sam_file.baseName}.sorted.bam") into sorted_bam_files
     file("${sam_file.baseName}.sorted.bam.bai") into bam_index_files
-    file("${reference}.fai") into indexed_references
+    tuple(file("${reference}"), file("${reference}.fai")) into indexed_references
+
 
     script:
     """
