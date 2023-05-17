@@ -87,7 +87,7 @@ process run_samtools {
     file(reference) from downloadedFasta
 
     output:
-    file("${sam_file.baseName}.sorted.bam") into sorted_bam_files
+    file("${sam_file.baseName}.sorted.bam").into(sorted_bam_files_for_bcftools, sorted_bam_files_for_qualimap)
     file("${sam_file.baseName}.sorted.bam.bai") into bam_index_files
     tuple(file("${reference}"), file("${reference}.fai")) into indexed_references
 
@@ -107,7 +107,7 @@ process run_bcftools {
     container 'eoksen/bcftools-1.17-arm:latest'
 
     input:
-    file(sorted_bam) from sorted_bam_files
+    file(sorted_bam) from sorted_bam_files_for_bcftools
     tuple(file(reference_fasta_gz), file(reference_fai)) from indexed_references
 
     output:
@@ -124,5 +124,20 @@ process run_bcftools {
 
     # Generate the consensus sequence
     zcat ${reference_fasta_gz} | bcftools consensus calls.vcf.gz > consensus.fasta
+    """
+}
+
+process run_qualimap {
+    container 'eoksen/qualimab-v2.2.1:latest'
+
+    input:
+    file(bam_file) from sorted_bam_files_for_qualimap
+
+    output:
+    file("bamqc_ref") into qualimap_results
+
+    script:
+    """
+    qualimap bamqc -outdir bamqc_ref -bam ${bam_file}
     """
 }
