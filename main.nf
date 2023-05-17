@@ -14,6 +14,8 @@ process fastq_dump {
     // Specify "/bin/sh" for this container
     shell '/bin/sh'
 
+    publishDir 'results/fastq_dump', mode: 'copy'
+
     input:
     val(sra_accession) from accessions_channel
 
@@ -28,6 +30,8 @@ process fastq_dump {
 
 process run_fastp {
     container 'eoksen/fastp:latest'
+
+    publishDir 'results/fastp', mode: 'copy'
 
     input:
     set val(name), file(reads) from reads_into_fastp
@@ -46,6 +50,8 @@ process run_fastp {
 process downloadFasta {
     container 'eoksen/biopython-pysam:latest'
 
+    publishDir 'results/downloaded_fasta', mode: 'copy'
+
     input:
     val identifierVal from params.identifier
 
@@ -61,6 +67,8 @@ process downloadFasta {
 process run_bowtie2 {
     cpus params.cpus
     container 'eoksen/bowtie2-arm:latest'
+
+    publishDir 'results/bowtie2', mode: 'copy'
 
     input:
     set val(name), file(reads) from trimmed_reads
@@ -81,6 +89,8 @@ process run_bowtie2 {
 process run_samtools {
     cpus params.cpus
     container 'eoksen/samtools-arm:latest'
+
+    publishDir 'results/samtools', mode: 'copy'
 
     input:
     file(sam_file) from sam_files
@@ -106,6 +116,8 @@ process run_bcftools {
     cpus params.cpus
     container 'eoksen/bcftools-1.17-arm:latest'
 
+    publishDir 'results/bcftools', mode: 'copy'
+
     input:
     file(sorted_bam) from sorted_bam_files_for_bcftools
     tuple(file(reference_fasta_gz), file(reference_fai)) from indexed_references
@@ -129,6 +141,8 @@ process run_bcftools {
 
 process run_qualimap {
     container 'eoksen/qualimab-v2.2.1:latest'
+
+    publishDir 'results/qualimap', mode: 'copy'
 
     input:
     file(bam_file) from sorted_bam_files_for_qualimap
