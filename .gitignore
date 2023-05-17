@@ -1,2 +1,5 @@
 results
 nextflow_archive
+.nextflow
+.nextflow.log
+work
