@@ -125,17 +125,24 @@ process run_bcftools {
     output:
     file("calls.vcf.gz") into vcf_files
     file("consensus.fasta") into consensus_sequences
+    file("calls.vcf.gz.stats") into stats_files
+    file("stats_plots/") into stats_plots
 
     script:
     """
     # Call variants
-    bcftools mpileup -Ou -f ${reference_fasta_gz} --threads ${task.cpus} ${sorted_bam} | bcftools call -mv -Oz -o calls.vcf.gz
+    bcftools mpileup -Ou -f ${reference_fasta_gz} --threads ${task.cpus} ${sorted_bam} | bcftools call --ploidy ${params.ploidy} -mv -Oz -o calls.vcf.gz
 
     # Index the variant file
     bcftools index calls.vcf.gz
 
     # Generate the consensus sequence
     zcat ${reference_fasta_gz} | bcftools consensus calls.vcf.gz > consensus.fasta
+
+    # Calculate statistics and generate plots
+    bcftools stats calls.vcf.gz > calls.vcf.gz.stats
+    mkdir stats_plots
+    plot-vcfstats -p stats_plots/ calls.vcf.gz.stats
     """
 }
 
