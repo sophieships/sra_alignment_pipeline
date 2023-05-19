@@ -114,6 +114,7 @@ process run_samtools {
 }
 
 
+
 process run_bcftools {
     cpus params.cpus
     container 'eoksen/bcftools-1.17-arm:latest'
@@ -167,10 +168,8 @@ process run_qualimap {
 }
 
 process run_bcftools_filter {
-    when:
-    params.include || params.exclude
-
     cpus params.cpus
+
     container 'eoksen/bcftools-1.17-arm:latest'
 
     publishDir 'results/filtered_vcfs', mode: 'copy'
@@ -180,8 +179,11 @@ process run_bcftools_filter {
 
     output:
     file("*_filtered.vcf.gz") into filtered_vcf_files
-    file("stats_files/*") into stats_files
-    file("stats_plots/*") into stats_plots
+    file("filtered_stats_files/*") into filtered_stats_files
+    file("filtered_stats_plots/*") into filtered_stats_plots
+
+    when:
+    params.include || params.exclude
 
     script:
     """
@@ -189,19 +191,19 @@ process run_bcftools_filter {
     if [[ '${params.exclude}' != '' ]]; then
         bcftools filter -e '${params.exclude}' --threads ${task.cpus} -o excluded_filtered.vcf.gz ${vcf_file}
         
-        mkdir -p stats_files/excluded
-        bcftools stats excluded_filtered.vcf.gz > stats_files/excluded/excluded.vcf.gz.stats
-        mkdir -p stats_plots/excluded
-        plot-vcfstats -p stats_plots/excluded/ stats_files/excluded/excluded.vcf.gz.stats
+        mkdir -p filtered_stats_files/excluded
+        bcftools stats excluded_filtered.vcf.gz > filtered_stats_files/excluded/excluded.vcf.gz.stats
+        mkdir -p filtered_stats_plots/excluded
+        plot-vcfstats -p filtered_stats_plots/excluded/ filtered_stats_files/excluded/excluded.vcf.gz.stats
     fi
     # Filter the variants based on user provided inclusion criteria and then generate stats and plots for the filtered vcfs
     if [[ '${params.include}' != '' ]]; then
         bcftools filter -i '${params.include}' --threads ${task.cpus} -o included_filtered.vcf.gz ${vcf_file}
         
-        mkdir -p stats_files/included
-        bcftools stats included_filtered.vcf.gz > stats_files/included/included.vcf.gz.stats
-        mkdir -p stats_plots/included
-        plot-vcfstats -p stats_plots/included/ stats_files/included/included.vcf.gz.stats
+        mkdir -p filtered_stats_files/included
+        bcftools stats included_filtered.vcf.gz > filtered_stats_files/included/included.vcf.gz.stats
+        mkdir -p filtered_stats_plots/included
+        plot-vcfstats -p filtered_stats_plots/included/ filtered_stats_files/included/included.vcf.gz.stats
     fi
     """
 }
