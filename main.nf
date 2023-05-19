@@ -9,7 +9,7 @@ accessions = params.sra_accession.split(',')
 accessions_channel = Channel.from(accessions)
 
 process fastq_dump {
-    container 'ncbi/sra-tools:aarch64-3.0.1'
+    container 'ncbi/sra-tools:3.0.1'
 
     // Specify "/bin/sh" for this container
     shell '/bin/sh'
