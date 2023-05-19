@@ -117,7 +117,7 @@ process run_samtools {
 
 process run_bcftools {
     cpus params.cpus
-    container 'eoksen/bcftools-1.17-arm:latest'
+    container 'eoksen/bcftools:1.17'
 
     publishDir 'results/bcftools', mode: 'copy'
 
@@ -170,7 +170,7 @@ process run_qualimap {
 process run_bcftools_filter {
     cpus params.cpus
 
-    container 'eoksen/bcftools-1.17-arm:latest'
+    container 'eoksen/bcftools:1.17'
 
     publishDir 'results/filtered_vcfs', mode: 'copy'
 
