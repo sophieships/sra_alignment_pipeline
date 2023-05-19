@@ -68,7 +68,7 @@ process downloadFasta {
 
 process run_bowtie2 {
     cpus params.cpus
-    container 'eoksen/bowtie2-arm:latest'
+    container 'eoksen/bowtie2.5.1:${params.architecture}'
 
     publishDir 'results/bowtie2', mode: 'copy'
 
