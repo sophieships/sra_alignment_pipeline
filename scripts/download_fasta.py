@@ -1,7 +1,7 @@
 from Bio import Entrez, SeqIO
 import pysam
 
-def download_fasta(identifier, email='your.email@example.com'):
+def download_fasta(identifier, email):
     Entrez.email = email
     handle = Entrez.efetch(db='nucleotide', id=identifier, rettype='fasta', retmode='text')
     record = SeqIO.read(handle, 'fasta')
@@ -16,4 +16,4 @@ def download_fasta(identifier, email='your.email@example.com'):
 
 if __name__ == "__main__":
     import sys
-    download_fasta(sys.argv[1])
+    download_fasta(sys.argv[1], sys.argv[2])
