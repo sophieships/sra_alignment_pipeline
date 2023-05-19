@@ -148,6 +148,7 @@ process run_bcftools {
     """
 }
 
+
 process run_qualimap {
     container 'eoksen/qualimab-v2.2.1:latest'
 
@@ -162,5 +163,45 @@ process run_qualimap {
     script:
     """
     qualimap bamqc -outdir bamqc_ref -bam ${bam_file}
+    """
+}
+
+process run_bcftools_filter {
+    when:
+    params.include || params.exclude
+
+    cpus params.cpus
+    container 'eoksen/bcftools-1.17-arm:latest'
+
+    publishDir 'results/filtered_vcfs', mode: 'copy'
+
+    input:
+    file(vcf_file) from vcf_files
+
+    output:
+    file("*_filtered.vcf.gz") into filtered_vcf_files
+    file("stats_files/*") into stats_files
+    file("stats_plots/*") into stats_plots
+
+    script:
+    """
+    # Filter the variants based on user provided exclusion criteria and then generate stats and plots for the filtered vcfs
+    if [[ '${params.exclude}' != '' ]]; then
+        bcftools filter -e '${params.exclude}' --threads ${task.cpus} -o excluded_filtered.vcf.gz ${vcf_file}
+        
+        mkdir -p stats_files/excluded
+        bcftools stats excluded_filtered.vcf.gz > stats_files/excluded/excluded.vcf.gz.stats
+        mkdir -p stats_plots/excluded
+        plot-vcfstats -p stats_plots/excluded/ stats_files/excluded/excluded.vcf.gz.stats
+    fi
+    # Filter the variants based on user provided inclusion criteria and then generate stats and plots for the filtered vcfs
+    if [[ '${params.include}' != '' ]]; then
+        bcftools filter -i '${params.include}' --threads ${task.cpus} -o included_filtered.vcf.gz ${vcf_file}
+        
+        mkdir -p stats_files/included
+        bcftools stats included_filtered.vcf.gz > stats_files/included/included.vcf.gz.stats
+        mkdir -p stats_plots/included
+        plot-vcfstats -p stats_plots/included/ stats_files/included/included.vcf.gz.stats
+    fi
     """
 }
