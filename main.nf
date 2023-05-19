@@ -54,13 +54,15 @@ process downloadFasta {
 
     input:
     val identifierVal from params.identifier
+    val emailval from params.email
 
     output:
     file("${identifierVal}_reference.fasta.gz") into downloadedFasta
 
     script:
     """
-    python /scripts/download_fasta.py ${identifierVal}
+    python /scripts/download_fasta.py ${identifierVal} ${emailval}
+
     """
 }
 
