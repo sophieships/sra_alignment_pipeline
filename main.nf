@@ -90,7 +90,7 @@ process run_bowtie2 {
 
 process run_samtools {
     cpus params.cpus
-    container 'eoksen/samtools-arm:latest'
+    container 'eoksen/samtools:1.17'
 
     publishDir 'results/samtools', mode: 'copy'
 
