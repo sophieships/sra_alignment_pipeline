@@ -151,7 +151,7 @@ process run_bcftools {
 
 
 process run_qualimap {
-    container 'eoksen/qualimab-v2.2.1:latest'
+    container 'eoksen/qualimab:v2.2.1'
 
     publishDir 'results/qualimap', mode: 'copy'
 
