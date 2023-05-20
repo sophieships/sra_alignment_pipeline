@@ -29,7 +29,7 @@ process fastq_dump {
 }
 
 process run_fastp {
-    container 'eoksen/fastp:latest'
+    container 'eoksen/fastp:v0.23.3'
 
     publishDir 'results/fastp', mode: 'copy'
 
@@ -41,6 +41,7 @@ process run_fastp {
 
     script:
     """
+    export LD_LIBRARY_PATH=/usr/local/lib
     fastp -i ${reads[0]} -I ${reads[1]} -o ${name}_trimmed_1.fastq.gz -O ${name}_trimmed_2.fastq.gz
     """
 }
@@ -62,13 +63,12 @@ process downloadFasta {
     script:
     """
     python /scripts/download_fasta.py ${identifierVal} ${emailval}
-
     """
 }
 
 process run_bowtie2 {
     cpus params.cpus
-    container 'eoksen/bowtie2.5.1:${params.architecture}'
+    container "eoksen/bowtie2.5.1:${params.architecture}"
 
     publishDir 'results/bowtie2', mode: 'copy'
 
