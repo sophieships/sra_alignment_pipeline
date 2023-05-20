@@ -49,7 +49,7 @@ process run_fastp {
 
 
 process downloadFasta {
-    container 'eoksen/biopython-pysam:latest'
+    container 'eoksen/biopython-pysam:3.9'
 
     publishDir 'results/downloaded_fasta', mode: 'copy'
 
