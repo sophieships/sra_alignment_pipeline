@@ -9,7 +9,7 @@ process fastq_dump {
     val sra_accession
 
     output:
-    tuple val(sra_accession), path("${sra_accession}_*.fastq.gz") emit: reads
+    tuple val(sra_accession), path("${sra_accession}_*.fastq.gz"), emit: reads
 
     script:
     """
