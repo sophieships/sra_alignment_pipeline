@@ -8,7 +8,7 @@ process downloadfasta {
     val emailval
 
     output:
-    path("${identifierVal}_reference.fasta.gz")
+    path("${identifierVal}_reference.fasta.gz"), emit: downloaded_fasta
 
     script:
     """
