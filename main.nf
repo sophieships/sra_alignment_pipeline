@@ -3,6 +3,21 @@ if (params.sra_accession == '') {
     error "You must provide an SRA accession number with --sra_accession"
 }
 
+if (params.identifier == '') {
+    log.error("No identifier provided. Specify it with --identifier. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email>")
+    exit 1
+}
+
+if (params.email == '') {
+    log.error("No email provided. Specify it with --email. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email>")
+    exit 1
+}
+
+if (params.cpus= = '' || !(params.cpus.isNumber())) {
+    log.error("Invalid or no CPU number provided. Specify it with --cpus. It should be a number. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email>")
+    exit 1
+}
+
 include { fastq_dump } from './nf_scripts/fastq_dump'
 include { run_fastp } from './nf_scripts/run_fastp'
 include { downloadfasta } from './nf_scripts/downloadfasta'
