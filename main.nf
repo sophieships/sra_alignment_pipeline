@@ -30,10 +30,10 @@ include { run_bcftools_filter } from './nf_scripts/run_bcftools_filter'
 
 workflow {
     fastq_dump( params.sra_accession )
-    run_fastp( fastq_dump.out.reads )
+    run_fastp( fastq_dump.out.forward_reads.combine(fastq_dump.out.reverse_reads) )
     downloadfasta( params.identifier, params.email )
-    run_bowtie2( run_fastp.out.reads, downloadfasta.out.downloaded )
-    run_samtools( run_bowtie2.out.sam, downloadfasta.out.downloaded )
+    run_bowtie2( run_fastp.out.trimmed_reads, downloadfasta.out.downloaded_fasta )
+    run_samtools( run_bowtie2.out.sam, downloadfasta.out.downloaded_fasta )
     run_bcftools( run_samtools.out.sorted_bam, run_samtools.out.indexed_references )
     run_qualimap( run_samtools.out.sorted_bam )
 
