@@ -4,14 +4,16 @@ process run_fastp {
     publishDir 'results/fastp', mode: 'copy'
 
     input:
-    tuple val(name), path(reads)
+    tuple val(name), path(forward_reads), path(reverse_reads)
 
     output:
-    tuple val(name), path("*_trimmed_{1,2}.fastq.gz")
+    tuple val(name), path("${name}_trimmed_1.fastq.gz"), emit: trimmed_forward_reads
+    tuple val(name), path("${name}_trimmed_2.fastq.gz"), emit: trimmed_reverse_reads
+
 
     script:
     """
     export LD_LIBRARY_PATH=/usr/local/lib
-    fastp -i ${reads[0]} -I ${reads[1]} -o ${name}_trimmed_1.fastq.gz -O ${name}_trimmed_2.fastq.gz
+    fastp -i ${forward_reads} -I ${reverse_reads} -o ${name}_trimmed_1.fastq.gz -O ${name}_trimmed_2.fastq.gz
     """
 }
