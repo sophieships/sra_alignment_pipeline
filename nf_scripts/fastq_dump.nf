@@ -9,8 +9,8 @@ process fastq_dump {
     val sra_accession
 
     output:
-    tuple val(sra_accession), path("${sra_accession}_*_1.fastq.gz"), emit: forward_reads
-    tuple val(sra_accession), path("${sra_accession}_*_2.fastq.gz"), emit: reverse_reads
+    tuple val(sra_accession), path("${sra_accession}_1.fastq.gz"), emit: forward_reads
+    tuple val(sra_accession), path("${sra_accession}_2.fastq.gz"), emit: reverse_reads
 
 
     script:
