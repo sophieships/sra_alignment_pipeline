@@ -1,4 +1,4 @@
-process downloadFasta {
+process downloadfasta {
     container 'eoksen/biopython-pysam:3.9'
 
     publishDir 'results/downloaded_fasta', mode: 'copy'
