@@ -13,7 +13,7 @@ if (params.email == '') {
     exit 1
 }
 
-if (params.cpus= = '' || !(params.cpus.isNumber())) {
+if (params.cpus == '' || !params.cpus.toString().isNumber()) {
     log.error("Invalid or no CPU number provided. Specify it with --cpus. It should be a number. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email>")
     exit 1
 }
