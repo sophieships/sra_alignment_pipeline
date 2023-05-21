@@ -4,13 +4,13 @@ process run_qualimap {
     publishDir 'results/qualimap', mode: 'copy'
 
     input:
-    path(bam_file)
+    path(sorted_bam)
 
     output:
     path("bamqc_ref"), emit: qualimap_results
 
     script:
     """
-    qualimap bamqc -outdir bamqc_ref -bam ${bam_file}
+    qualimap bamqc -outdir bamqc_ref -bam ${sorted_bam}
     """
 }
