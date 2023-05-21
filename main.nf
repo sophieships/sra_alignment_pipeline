@@ -33,7 +33,7 @@ workflow {
     run_fastp( fastq_dump.out.forward_reads.combine(fastq_dump.out.reverse_reads) )
     downloadfasta( params.identifier, params.email )
     run_bowtie2( run_fastp.out.trimmed_forward_reads.combine(run_fastp.out.trimmed_reverse_reads), downloadfasta.out.downloaded_fasta )
-    run_samtools( run_bowtie2.out.sam, downloadfasta.out.downloaded_fasta )
+    run_samtools( run_bowtie2.out.bowtie2_output, downloadfasta.out.downloaded_fasta )
     run_bcftools( run_samtools.out.sorted_bam, run_samtools.out.indexed_references )
     run_qualimap( run_samtools.out.sorted_bam )
 
