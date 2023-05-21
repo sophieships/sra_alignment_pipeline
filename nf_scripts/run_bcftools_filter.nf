@@ -13,9 +13,6 @@ process run_bcftools_filter {
     path("filtered_stats_files/*"), emit: filtered_stats_files
     path("filtered_stats_plots/*"), emit: filtered_stats_plots
 
-    when:
-    params.include || params.exclude
-
     script:
     """
     # Filter the variants based on user provided exclusion criteria and then generate stats and plots for the filtered vcfs
