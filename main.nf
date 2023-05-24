@@ -4,17 +4,22 @@ if (params.sra_accession == '') {
 }
 
 if (params.identifier == '') {
-    log.error("No identifier provided. Specify it with --identifier. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email>")
+    log.error("No identifier provided. Specify it with --identifier. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
     exit 1
 }
 
 if (params.email == '') {
-    log.error("No email provided. Specify it with --email. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email>")
+    log.error("No email provided. Specify it with --email. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
     exit 1
 }
 
 if (params.cpus == '' || !params.cpus.toString().isNumber()) {
-    log.error("Invalid or no CPU number provided. Specify it with --cpus. It should be a number. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email>")
+    log.error("Invalid or no CPU number provided. Specify it with --cpus. It should be a number. \nnextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
+    exit 1
+}
+
+if (params.architecture == '') {
+    log.error("No architecture provided. Specify it with --architecture. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
     exit 1
 }
 
