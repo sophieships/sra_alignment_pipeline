@@ -14,5 +14,5 @@ mkdir -p $run_dir
 
 # Move the work directory, the .nextflow.log file, and other .nextflow* files to the run directory
 mv work $run_dir/
-mv .nextflow.log $run_dir/
-mv .nextflow* $run_dir/
+mv .nextflow.log* $run_dir/
+mv .nextflow $run_dir/
