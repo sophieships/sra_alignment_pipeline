@@ -8,10 +8,10 @@ process run_qualimap {
     path(sorted_bam)
 
     output:
-    path("bamqc_ref"), emit: qualimap_results
+    path("${sorted_bam.baseName}"), emit: qualimap_results
 
     script:
     """
-    qualimap bamqc -outdir bamqc_ref -bam ${sorted_bam} -nt ${task.cpus}
+    qualimap bamqc -outdir ${sorted_bam.baseName} -bam ${sorted_bam} -nt ${task.cpus}
     """
 }
