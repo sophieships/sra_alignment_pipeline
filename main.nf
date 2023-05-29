@@ -24,6 +24,7 @@ if (params.architecture == '') {
 }
 
 include { fastq_dump } from './nf_scripts/fastq_dump'
+include { compress_reads } from './nf_scripts/compress_reads'
 include { run_fastp } from './nf_scripts/run_fastp'
 include { downloadfasta } from './nf_scripts/downloadfasta'
 include { run_bowtie2 } from './nf_scripts/run_bowtie2'
@@ -61,7 +62,8 @@ identifiers = file_channel.map { it[1] }
 workflow {
 
     fastq_dump( accessions )
-    run_fastp( fastq_dump.out.forward_reads.join(fastq_dump.out.reverse_reads) )
+    compress_reads( fastq_dump.out.forward_reads.join(fastq_dump.out.reverse_reads) )
+    run_fastp( compress_reads.out.gzip_forward_reads.join(compress_reads.out.gzip_reverse_reads) )
     downloadfasta( identifiers, params.email )
     run_bowtie2( run_fastp.out.trimmed_forward_reads.join(run_fastp.out.trimmed_reverse_reads), downloadfasta.out.downloaded_fasta )
     run_samtools( run_bowtie2.out.bowtie2_output, downloadfasta.out.downloaded_fasta )
