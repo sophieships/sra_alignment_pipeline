@@ -1,4 +1,5 @@
 process run_fastp {
+    cpus params.cpus
     container 'eoksen/fastp:v0.23.3'
 
     publishDir 'results/fastp', mode: 'copy'
@@ -14,6 +15,6 @@ process run_fastp {
     script:
     """
     export LD_LIBRARY_PATH=/usr/local/lib
-    fastp -i ${forward_reads} -I ${reverse_reads} -o ${name}_trimmed_1.fastq.gz -O ${name}_trimmed_2.fastq.gz
+    fastp -w ${task.cpus} -i ${forward_reads} -I ${reverse_reads} -o ${name}_trimmed_1.fastq.gz -O ${name}_trimmed_2.fastq.gz
     """
 }
