@@ -10,8 +10,7 @@ process run_fastp {
     output:
     tuple val(name), path("${name}_trimmed_1.fastq.gz"), emit: trimmed_forward_reads
     tuple val(name), path("${name}_trimmed_2.fastq.gz"), emit: trimmed_reverse_reads
-
-
+    
     script:
     """
     export LD_LIBRARY_PATH=/usr/local/lib
