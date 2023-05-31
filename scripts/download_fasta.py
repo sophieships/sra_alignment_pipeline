@@ -1,8 +1,10 @@
 from Bio import Entrez, SeqIO
 import pysam
+import time
 
 def download_fasta(identifier, email):
     Entrez.email = email
+    time.sleep(3)
     handle = Entrez.efetch(db='nucleotide', id=identifier, rettype='fasta', retmode='text')
     record = SeqIO.read(handle, 'fasta')
     handle.close()
