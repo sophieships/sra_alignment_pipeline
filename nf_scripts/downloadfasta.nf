@@ -12,6 +12,7 @@ process downloadfasta {
 
     script:
     """
+    echo "Downloading fasta file for ${identifierVal}"
     python /scripts/download_fasta.py ${identifierVal} ${emailval}
     """
 }
