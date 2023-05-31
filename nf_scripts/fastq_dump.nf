@@ -1,9 +1,8 @@
 process fastq_dump {
+    cpus params.cpus
     container 'ncbi/sra-tools:3.0.1'
 
     shell '/bin/sh'
-
-    publishDir 'results/fastq', mode: 'copy'
 
     input:
     val sra_accession
@@ -16,6 +15,6 @@ process fastq_dump {
     script:
     """
     prefetch ${sra_accession}
-    fasterq-dump ${sra_accession}
+    fasterq-dump ${sra_accession} --threads ${task.cpus} -b 100M -c 200M -m 2G
     """
 }
