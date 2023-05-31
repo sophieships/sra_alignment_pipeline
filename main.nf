@@ -24,7 +24,7 @@ if (params.architecture == '') {
 }
 
 include { fastq_dump } from './nf_scripts/fastq_dump'
-include { compress_reads } from './nf_scripts/compress_reads'
+include { compress_reads } from './nf_scripts/compress_reads.nf'
 include { run_fastp } from './nf_scripts/run_fastp'
 include { downloadfasta } from './nf_scripts/downloadfasta'
 include { run_bowtie2 } from './nf_scripts/run_bowtie2'
