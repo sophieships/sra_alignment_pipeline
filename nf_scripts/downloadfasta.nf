@@ -1,4 +1,5 @@
 process downloadfasta {
+    maxForks 1
     container 'eoksen/biopython-pysam:3.9'
 
     publishDir 'results/downloaded_fasta', mode: 'copy'
