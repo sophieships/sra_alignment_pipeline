@@ -23,6 +23,8 @@ if (params.architecture == '') {
     error("No architecture provided. Specify it with --architecture. \nTo check your system's architecture: \n- Unix-based (Linux/MacOS/WSL2): use the 'uname -m' command \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
 }
 
+include { get_srrs } from './nf_scripts/get_srrs'
+include { parse_srrs } from './nf_scripts/parse_srrs'
 include { fastq_dump } from './nf_scripts/fastq_dump'
 include { compress_reads } from './nf_scripts/compress_reads.nf'
 include { run_fastp } from './nf_scripts/run_fastp'
@@ -33,38 +35,47 @@ include { run_bcftools } from './nf_scripts/run_bcftools'
 include { run_qualimap } from './nf_scripts/run_qualimap'
 include { run_bcftools_filter } from './nf_scripts/run_bcftools_filter'
 
-
-// Create the default channel with a single accession and identifier
-default_channel = Channel.value([params.sra_accession, params.identifier])
-
-// If an input file is specified, create a channel from the file
-if (params.input_file != '') {
-    Channel
-        .fromPath(params.input_file)
-        .splitCsv() // splits by line
-        .map { tuple(it[0], it[1]) } // create tuple for each line
-        .set { file_channel }
-} else {
-    // If no input file is specified, use the default channel
-    file_channel = default_channel
-}
-
-file_channel
-    .map {
-        accession, identifier -> tuple(accession, identifier)
-    }
-    .set { entries }
-
-// Split the tuple into separate channels
-accessions = file_channel.map { it[0] }
-identifiers = file_channel.map { it[1] }
+if (params.sra_accession && params.identifier && params.input_file == '') {
+    log.info("SRA accession and identifier provided. Downloading SRRs from SRA.")
+    Channel.value([params.sra_accession, params.identifier])
+        .set { accessions_channel }
+} 
 
 workflow {
+    if (params.input_file == '') {
+        log.info("No input file provided. Downloading SRRs from SRA.")
+        accessions = accessions_channel.map { it[0] }
+        identifiers = accessions_channel.map { it[1] }
+        get_srrs( accessions, identifiers )
+            srr_tuples = get_srrs.out.srr_list
+                     .collectFile()
+                     .splitCsv(header: false)
+                     .map { tuple(it[0], it[1]) }
 
-    fastq_dump( accessions )
+    sra_accessions_channel = srr_tuples.map{ it[0] }
+    identifiers_channel = srr_tuples.map{ it[1] }
+
+    fastq_dump( sra_accessions_channel )
+    }
+    else {
+        log.info("Input file provided. Parsing SRRs from input file.")
+        input_file_channel = Channel.fromPath(params.input_file)
+        parse_srrs( input_file_channel )
+
+        srr_tuples = parse_srrs.out.parsed_srrs
+                    .collectFile()
+                    .splitCsv(header: false)
+                    .map { tuple(it[0], it[1]) }
+
+        sra_accessions_channel = srr_tuples.map{ it[0] }
+        identifiers_channel = srr_tuples.map{ it[1] }
+
+        fastq_dump( sra_accessions_channel )
+    }
+
     compress_reads( fastq_dump.out.forward_reads.join(fastq_dump.out.reverse_reads) )
     run_fastp( compress_reads.out.gzip_forward_reads.join(compress_reads.out.gzip_reverse_reads) )
-    downloadfasta( identifiers, params.email )
+    downloadfasta( identifiers_channel, params.email )
     run_bowtie2( run_fastp.out.trimmed_forward_reads.join(run_fastp.out.trimmed_reverse_reads), downloadfasta.out.downloaded_fasta )
     run_samtools( run_bowtie2.out.bowtie2_output, downloadfasta.out.downloaded_fasta )
     run_bcftools( run_samtools.out.sorted_bam, run_samtools.out.indexed_references )
