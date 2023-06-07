@@ -1,24 +1,29 @@
-// Validate parameters
+// If no SRA accession number, identifier, or input file is provided, throw an error.
 if ( params.sra_accession == '' && params.identifier == '' && params.input_file == '' ) {
     error "You must provide either an SRA accession number and identifier with --sra_accession and --identifier, or an input file with --input_file"
 }
 
+// If only one of the SRA accession or identifier is provided without an input file, throw an error.
 if (( params.sra_accession == '' || params.identifier == '' ) && params.input_file == '' ) {
     error("You have only provided one of the SRA accession or identifier. Both or an input file must be provided. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64> \nOr provide an input file: nextflow run main.nf --input_file <file> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
 }
 
+// If both an input file and individual SRA accession and/or identifier are provided, log a warning that only the input file will be used.
 if ( params.input_file != '' && ( params.sra_accession != '' || params.identifier != '' )) {
     log.warn("Both an input file and individual SRA accession and/or identifier are provided. Only the input file will be used for the pipeline.")
 }
 
+// If no email is provided, throw an error.
 if ( params.email == '' ) {
     error("No email provided. Specify it with --email. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
 }
 
+// If the provided CPU number is not a number, throw an error.
 if ( !params.cpus.toString().isNumber() ) {
     error("Invalid CPU number provided. Specify it with --cpus <int>. It should be an integer. \nTo check the number of CPUs on your system: \n- Unix-based (Linux/MacOS/WSL2): use the 'nproc' command \n- To adjust system cpu and memory allocation for Docker, go to Docker Desktop, then settings/resources and set cpu and memory parameters. \nnextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
 }
 
+// If the provided architecture is neither 'arm64' nor 'x86_64', throw an error.
 if ( params.architecture != 'arm64' && params.architecture != 'x86_64' ) {
     error("You must specify --architecture 'arm64' or 'x86_64' to run the bowtie2 docker container. \nTo check your system's architecture: \n- Unix-based (Linux/MacOS/WSL2): use the 'uname -m' command \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
 }
