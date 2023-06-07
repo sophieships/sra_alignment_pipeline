@@ -53,8 +53,8 @@
 <!-- C -->
 <g id="node5" class="node">
 <title>C</title>
-<ellipse fill="none" stroke="black" cx="408.24" cy="-378" rx="168.04" ry="18"/>
-<text text-anchor="middle" x="408.24" y="-372.95" font-family="Times,serif" font-size="14.00">Quality Control and Preprocessing (Fastp)</text>
+<ellipse fill="none" stroke="black" cx="408.24" cy="-378" rx="166" ry="18"/>
+<text text-anchor="middle" x="408.24" y="-372.95" font-family="Times,serif" font-size="14.00">Quality Control and Preprocessing (fastp)</text>
 </g>
 <!-- B2&#45;&gt;C -->
 <g id="edge4" class="edge">
@@ -71,8 +71,8 @@
 <!-- D -->
 <g id="node6" class="node">
 <title>D</title>
-<ellipse fill="none" stroke="black" cx="408.24" cy="-306" rx="269.38" ry="18"/>
-<text text-anchor="middle" x="408.24" y="-300.95" font-family="Times,serif" font-size="14.00">Download Reference Genome (Biopython Entrez and SeqIO, pysam)</text>
+<ellipse fill="none" stroke="black" cx="408.24" cy="-306" rx="269.89" ry="18"/>
+<text text-anchor="middle" x="408.24" y="-300.95" font-family="Times,serif" font-size="14.00">Download Reference Genome (Biopython Entrez and SeqIO, Pysam)</text>
 </g>
 <!-- C&#45;&gt;D -->
 <g id="edge6" class="edge">
