@@ -15,12 +15,12 @@ if ( params.email == '' ) {
     error("No email provided. Specify it with --email. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
 }
 
-if ( params.cpus == '' || !params.cpus.toString().isNumber() ) {
-    error("Invalid or no CPU number provided. Specify it with --cpus. It should be a number. \nTo check the number of CPUs on your system: \n- Unix-based (Linux/MacOS/WSL2): use the 'nproc' command \nnextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
+if ( !params.cpus.toString().isNumber() ) {
+    error("Invalid CPU number provided. Specify it with --cpus <int>. It should be an integer. \nTo check the number of CPUs on your system: \n- Unix-based (Linux/MacOS/WSL2): use the 'nproc' command \n- To adjust system cpu and memory allocation for Docker, go to Docker Desktop, then settings/resources and set cpu and memory parameters. \nnextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
 }
 
-if ( params.architecture == '' ) {
-    error("No architecture provided. Specify it with --architecture. \nTo check your system's architecture: \n- Unix-based (Linux/MacOS/WSL2): use the 'uname -m' command \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
+if ( params.architecture != 'arm64' && params.architecture != 'x86_64' ) {
+    error("You must specify --architecture 'arm64' or 'x86_64' to run the bowtie2 docker container. \nTo check your system's architecture: \n- Unix-based (Linux/MacOS/WSL2): use the 'uname -m' command \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
 }
 
 include { get_srrs } from './nf_scripts/get_srrs'
