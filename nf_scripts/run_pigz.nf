@@ -1,4 +1,4 @@
-process compress_reads {
+process run_pigz {
     cpus params.cpus
     container 'eoksen/pigz:2.6-1'
 

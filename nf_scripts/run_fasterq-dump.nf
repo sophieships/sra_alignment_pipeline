@@ -1,4 +1,4 @@
-process fastq_dump {
+process run_fasterq_dump {
     cpus params.cpus
     container 'ncbi/sra-tools:3.0.1'
 
