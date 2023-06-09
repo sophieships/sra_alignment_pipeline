@@ -12,7 +12,7 @@ process download_fastq {
     output:
     tuple val(sra_accession), path("${sra_accession}_1.fastq.gz"), optional: true, emit: gzip_forward_reads
     tuple val(sra_accession), path("${sra_accession}_2.fastq.gz"), optional: true, emit: gzip_reverse_reads
-    path("${sra_accession}_download_status.txt"), optional: true, emit: download_status
+    path("${sra_accession}.txt"), optional: true, emit: download_status
 
 
     script:
