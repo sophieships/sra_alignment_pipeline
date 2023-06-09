@@ -68,16 +68,20 @@ The pipeline uses several different open-source packages, including:
 
 
 
-## Pipeline Graphs
-Generated using -with-dag option in Nextflow and [Mermaidv10.2.2 Live Editor](https://mermaid.live/edit#pako:eNpVjk2Lg0AMhv9KyGkL9Q94WGh1t5fCFurN6SFo7AztfDBGpKj_fcd62c0pvM_zhkzY-JYxx-7px0ZTFKhK5SDNoS50NL1Y6m-QZZ_ziQWsd_ya4fhx8tBrH4Jx993mH1cJium8agyijXssGyre_R_HM5T1mYL4cPtLqtHP8FWbi07n_xMdObW-647yjrKGIhQU3wru0XK0ZNr0_rQmCkWzZYV5WlvuaHiKQuWWpNIg_vpyDeYSB97jEFoSLg3dI9ktXH4B_cJWqw)
+## Pipeline Directed Acyclic Graphs (DAGs)
+- DAGs were generated using the `-with-dag` option with both `nextflow run` command, e.g.:
+```bash
+nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> -with-dag dag_name.mmd
+```
+- The contents of the .mmd file were then loaded into [Mermaidv10.2.2 Live Editor](https://mermaid.live/edit#pako:eNpVjk2Lg0AMhv9KyGkL9Q94WGh1t5fCFurN6SFo7AztfDBGpKj_fcd62c0pvM_zhkzY-JYxx-7px0ZTFKhK5SDNoS50NL1Y6m-QZZ_ziQWsd_ya4fhx8tBrH4Jx993mH1cJium8agyijXssGyre_R_HM5T1mYL4cPtLqtHP8FWbi07n_xMdObW-647yjrKGIhQU3wru0XK0ZNr0_rQmCkWzZYV5WlvuaHiKQuWWpNIg_vpyDeYSB97jEFoSLg3dI9ktXH4B_cJWqw) to create the DAGs below.
 
 **Input_File Graph**
 ***
-![input_file pipeline graph](./input_file_flowchart.svg)
+![input_file pipeline directed acyclic graph](./input_file_flowchart.svg)
 
 **CLI_Input Graph**
 ***
-![cli_input pipeline graph](./cli_sra_accession_flowchart.svg)
+![cli_input pipeline directed acyclic graph](./cli_sra_accession_flowchart.svg)
 
 
 ## Usage
