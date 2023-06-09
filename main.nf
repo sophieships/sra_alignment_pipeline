@@ -63,6 +63,7 @@ workflow {
         download_fastq( sra_accessions_channel, params.email )
         run_fasterq_dump( download_fastq.out.download_status )
         run_pigz( run_fasterq_dump.out.forward_reads.join( run_fasterq_dump.out.reverse_reads), download_fastq.out.download_status )
+        download_fasta( sra_accessions_channel, identifiers_channel, params.email )
         forward_reads = download_fastq.out.gzip_forward_reads.mix( run_pigz.out.gzip_forward_reads )
         reverse_reads = download_fastq.out.gzip_reverse_reads.mix( run_pigz.out.gzip_reverse_reads )
     }
@@ -81,11 +82,11 @@ workflow {
         download_fastq( sra_accessions_channel, params.email )
         run_fasterq_dump( download_fastq.out.download_status )
         run_pigz( run_fasterq_dump.out.forward_reads.join(run_fasterq_dump.out.reverse_reads), download_fastq.out.download_status )
+        download_fasta( sra_accessions_channel, identifiers_channel, params.email )
         forward_reads = download_fastq.out.gzip_forward_reads.mix( run_pigz.out.gzip_forward_reads )
         reverse_reads = download_fastq.out.gzip_reverse_reads.mix( run_pigz.out.gzip_reverse_reads )
     }
     run_fastp( forward_reads.join( reverse_reads ) )
-    download_fasta( identifiers_channel, params.email )
     run_bowtie2( run_fastp.out.trimmed_forward_reads.join( run_fastp.out.trimmed_reverse_reads), download_fasta.out.downloaded_fasta )
     run_samtools( run_bowtie2.out.bowtie2_output, download_fasta.out.downloaded_fasta )
     run_bcftools( run_samtools.out.sorted_bam, run_samtools.out.indexed_references )
