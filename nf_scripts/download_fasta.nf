@@ -2,7 +2,7 @@ process download_fasta {
     maxForks 1
     container 'eoksen/biopython-pysam:3.9'
 
-    publishDir "results/${sra_accession}/downloaded_fasta", mode: 'copy'
+    publishDir "results/${sra_accession}/fasta", mode: 'copy'
 
     input:
     val sra_accession
