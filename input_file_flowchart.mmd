@@ -1,0 +1,68 @@
+flowchart TD
+    p0((Channel.fromPath))
+    p1[parse_srrs]
+    p2([collectFile])
+    p3([splitCsv])
+    p4([map])
+    p5([map])
+    p6([map])
+    p7(( ))
+    p8[download_fastq]
+    p9[run_fasterq_dump]
+    p10([join])
+    p11[run_pigz]
+    p12(( ))
+    p13[download_fasta]
+    p14([mix])
+    p15([mix])
+    p16([join])
+    p17[run_fastp]
+    p18([join])
+    p19[run_bowtie2]
+    p20[run_samtools]
+    p21(( ))
+    p22[run_bcftools]
+    p23(( ))
+    p24(( ))
+    p25(( ))
+    p26(( ))
+    p27[run_qualimap]
+    p28(( ))
+    p0 -->|input_file_channel| p1
+    p1 --> p2
+    p2 --> p3
+    p3 --> p4
+    p4 -->|srr_tuples| p5
+    p5 -->|sra_accessions_channel| p8
+    p4 -->|srr_tuples| p6
+    p6 -->|identifiers_channel| p13
+    p7 -->|emailval| p8
+    p8 --> p14
+    p8 --> p15
+    p8 --> p9
+    p9 --> p10
+    p9 --> p10
+    p10 --> p11
+    p8 -->|download_status| p11
+    p11 --> p14
+    p11 --> p15
+    p5 -->|sra_accessions_channel| p13
+    p12 -->|emailval| p13
+    p13 --> p19
+    p14 -->|forward_reads| p16
+    p15 -->|reverse_reads| p16
+    p16 --> p17
+    p17 --> p18
+    p17 --> p18
+    p18 --> p19
+    p19 --> p20
+    p13 -->|downloaded_fasta| p20
+    p20 --> p22
+    p20 --> p21
+    p20 --> p22
+    p22 --> p26
+    p22 --> p25
+    p22 --> p24
+    p22 --> p23
+    p20 -->|sorted_bam| p27
+    p27 --> p28

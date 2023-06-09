@@ -68,13 +68,19 @@ The pipeline uses several different open-source packages, including:
 
 
 
-## Pipeline Graph
-Generated using [graphviz v0.2.1](https://github.com/graphp/graphviz/releases/tag/v0.2.1)
-![Pipeline Graph](./pipeline_dot_diagram.svg)
+## Pipeline Graphs
+Generated using -with-dag option in Nextflow and [Mermaidv10.2.2 Live Editor](https://mermaid.live/edit#pako:eNpVjk2Lg0AMhv9KyGkL9Q94WGh1t5fCFurN6SFo7AztfDBGpKj_fcd62c0pvM_zhkzY-JYxx-7px0ZTFKhK5SDNoS50NL1Y6m-QZZ_ziQWsd_ya4fhx8tBrH4Jx993mH1cJium8agyijXssGyre_R_HM5T1mYL4cPtLqtHP8FWbi07n_xMdObW-647yjrKGIhQU3wru0XK0ZNr0_rQmCkWzZYV5WlvuaHiKQuWWpNIg_vpyDeYSB97jEFoSLg3dI9ktXH4B_cJWqw)
+
+**Input_File Graph**
+***
+![input_file pipeline graph](./input_file_flowchart.svg)
+
+**CLI_Input Graph**
+***
+![cli_input pipeline graph](./cli_sra_accession_flowchart.svg)
 
 
 ## Usage
-
 ```
 nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main [OPTIONS] OR nextflow run main.nf [OPTIONS]
 
@@ -140,9 +146,9 @@ For this file, process execution should look like:
 
 ![process_execution](/test_data/test1/process_execution.png)
 
-and the results directory should look contain the following files:
+and the results directory should contain the following files:
 
-![results_folder](/test_data/test1/results_folder.png)
+![results_folder](/test_data/test1/test1_results_folder.png)
 
 ## Post-Run Cleanup and Archiving
 
