@@ -2,7 +2,7 @@ process run_fastp {
     cpus params.cpus
     container 'eoksen/fastp:v0.23.3'
 
-    publishDir 'results/fastp', mode: 'copy'
+    publishDir "results/${name}/fastp", mode: 'copy'
 
     input:
     tuple val(name), path(forward_reads), path(reverse_reads)

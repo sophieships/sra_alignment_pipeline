@@ -1,7 +1,7 @@
 process parse_srrs {
     container 'eoksen/sra-parser:1.0'
 
-    publishDir 'results/srr_lists', mode: 'copy'
+    publishDir "results/${input_file}/srr_lists", mode: 'copy'
 
     input:
     path(input_file)

@@ -3,7 +3,7 @@ process download_fastq {
     container 'eoksen/aria2-sra-download:1.35'
     errorStrategy 'ignore'
 
-    publishDir 'results/fastq', mode: 'copy'
+    publishDir "results/${sra_accession}/fastq", mode: 'copy'
 
     input:
     val sra_accession

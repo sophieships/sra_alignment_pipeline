@@ -2,7 +2,7 @@ process run_samtools {
     cpus params.cpus
     container 'eoksen/samtools:1.17'
 
-    publishDir 'results/samtools', mode: 'copy'
+    publishDir "results/${name}/samtools", mode: 'copy'
 
     input:
     tuple val(name), path(sam_file), path(pair_align), path(pair_unmapped)

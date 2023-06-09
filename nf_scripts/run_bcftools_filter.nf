@@ -3,7 +3,7 @@ process run_bcftools_filter {
 
     container 'eoksen/bcftools:1.17'
 
-    publishDir 'results/filtered_vcfs', mode: 'copy'
+    publishDir "results/${vcf_file.simpleName}/filtered_vcfs", mode: 'copy'
 
     input:
     path(vcf_file)

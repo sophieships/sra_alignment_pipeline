@@ -2,7 +2,7 @@ process run_pigz {
     cpus params.cpus
     container 'eoksen/pigz:2.6-1'
 
-    publishDir 'results/fastq', mode: 'copy'
+    publishDir "results/${sra_accession}/fastq", mode: 'copy'
 
 
     input:
