@@ -133,7 +133,7 @@ nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email 
 ## Test the Pipeline
 Two input files are provided in the `test_data` directory. To run the pipeline on the test data, execute the following command in your terminal at the root of the cloned repo:
 ```bash
-nextflow run main.nf --input_file test_data/test1.csv --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> 
+nextflow run main.nf --input_file test_data/test1/test1.csv --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> 
 ```
 
 For this file, process execution should look like:
