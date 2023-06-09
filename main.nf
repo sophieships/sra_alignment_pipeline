@@ -13,7 +13,7 @@ if ( params.input_file != '' && ( params.sra_accession != '' || params.identifie
     log.warn("Both an input file and individual SRA accession and/or identifier are provided. Only the input file will be used for the pipeline.")
 }
 
-// If no email is provided, throw an error.
+// If no email is provided, throw an error. 
 if ( params.email == '' ) {
     error("No email provided. Specify it with --email. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
 }
@@ -61,7 +61,7 @@ workflow {
         sra_accessions_channel = srr_tuples.map{ it[0] }
         identifiers_channel = srr_tuples.map{ it[1] }
         download_fastq( sra_accessions_channel, params.email )
-        run_fasterq_dump( sra_accessions_channel, download_fastq.out.download_status )
+        run_fasterq_dump( download_fastq.out.download_status )
         run_pigz( run_fasterq_dump.out.forward_reads.join( run_fasterq_dump.out.reverse_reads), download_fastq.out.download_status )
         forward_reads = download_fastq.out.gzip_forward_reads.mix( run_pigz.out.gzip_forward_reads )
         reverse_reads = download_fastq.out.gzip_reverse_reads.mix( run_pigz.out.gzip_reverse_reads )
@@ -79,7 +79,7 @@ workflow {
         sra_accessions_channel = srr_tuples.map{ it[0] }
         identifiers_channel = srr_tuples.map{ it[1] }
         download_fastq( sra_accessions_channel, params.email )
-        run_fasterq_dump( sra_accessions_channel, download_fastq.out.download_status )
+        run_fasterq_dump( download_fastq.out.download_status )
         run_pigz( run_fasterq_dump.out.forward_reads.join(run_fasterq_dump.out.reverse_reads), download_fastq.out.download_status )
         forward_reads = download_fastq.out.gzip_forward_reads.mix( run_pigz.out.gzip_forward_reads )
         reverse_reads = download_fastq.out.gzip_reverse_reads.mix( run_pigz.out.gzip_reverse_reads )
