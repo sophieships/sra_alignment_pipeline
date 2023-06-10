@@ -46,6 +46,7 @@ workflow {
         log.info("SRA accession and identifier provided. Downloading SRRs from SRA.")
         Channel.value( [params.sra_accession, params.identifier] )
             .set { accessions_channel }
+
         accessions = accessions_channel.map { it[0] }
         identifiers = accessions_channel.map { it[1] }
         get_srrs( accessions, identifiers )
@@ -56,12 +57,18 @@ workflow {
 
         sra_accessions_channel = srr_tuples.map{ it[0] }
         identifiers_channel = srr_tuples.map{ it[1] }
+
         download_fastq( sra_accessions_channel, params.email )
+        
+        // run only when download_status is emitted from download_fastq
         run_fasterq_dump( download_fastq.out.download_status )
         run_pigz( run_fasterq_dump.out.forward_reads.join( run_fasterq_dump.out.reverse_reads), download_fastq.out.download_status )
-        download_fasta( sra_accessions_channel, identifiers_channel, params.email )
+
+        // mix the forward and reverse reads from download_fastq and run_pigz
         forward_reads = download_fastq.out.gzip_forward_reads.mix( run_pigz.out.gzip_forward_reads )
         reverse_reads = download_fastq.out.gzip_reverse_reads.mix( run_pigz.out.gzip_reverse_reads )
+
+        download_fasta( sra_accessions_channel, identifiers_channel, params.email )
     }
     else {
         log.info("Input file provided. Parsing SRRs from input file.")
@@ -76,19 +83,30 @@ workflow {
 
         sra_accessions_channel = srr_tuples.map{ it[0] }
         identifiers_channel = srr_tuples.map{ it[1] }
+
         download_fastq( sra_accessions_channel, params.email )
+
+        // run only when download_status is emitted from download_fastq
         run_fasterq_dump( download_fastq.out.download_status )
         run_pigz( run_fasterq_dump.out.forward_reads.join(run_fasterq_dump.out.reverse_reads), download_fastq.out.download_status )
-        download_fasta( sra_accessions_channel, identifiers_channel, params.email )
+
+        // mix the forward and reverse reads from download_fastq and run_pigz
         forward_reads = download_fastq.out.gzip_forward_reads.mix( run_pigz.out.gzip_forward_reads )
         reverse_reads = download_fastq.out.gzip_reverse_reads.mix( run_pigz.out.gzip_reverse_reads )
+
+        download_fasta( sra_accessions_channel, identifiers_channel, params.email )
+
     }
+    
     run_fastp( forward_reads.join( reverse_reads ) )
+    
     run_bowtie2( run_fastp.out.trimmed_forward_reads.join( run_fastp.out.trimmed_reverse_reads), download_fasta.out.downloaded_fasta )
+    
     run_samtools( run_bowtie2.out.bowtie2_output, download_fasta.out.downloaded_fasta )
-    run_bcftools( run_samtools.out.sorted_bam, run_samtools.out.indexed_references )
+    
     run_qualimap( run_samtools.out.sorted_bam )
 
+    run_bcftools( run_samtools.out.sorted_bam, run_samtools.out.indexed_references )
     if ( params.include || params.exclude ) {
         run_bcftools_filter( run_bcftools.out.vcf_files )
     }
