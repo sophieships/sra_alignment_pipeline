@@ -41,15 +41,11 @@ include { run_bcftools } from './nf_scripts/run_bcftools'
 include { run_qualimap } from './nf_scripts/run_qualimap'
 include { run_bcftools_filter } from './nf_scripts/run_bcftools_filter'
 
-if ( params.sra_accession && params.identifier && params.input_file == '' ) {
-    log.info("SRA accession and identifier provided. Downloading SRRs from SRA.")
-    Channel.value( [params.sra_accession, params.identifier] )
-        .set { accessions_channel }
-} 
-
 workflow {
-    if ( params.input_file == '' ) {
-        log.info("No input file provided. Downloading SRRs from SRA.")
+    if ( params.sra_accession && params.identifier && params.input_file == '' ) {
+        log.info("SRA accession and identifier provided. Downloading SRRs from SRA.")
+        Channel.value( [params.sra_accession, params.identifier] )
+            .set { accessions_channel }
         accessions = accessions_channel.map { it[0] }
         identifiers = accessions_channel.map { it[1] }
         get_srrs( accessions, identifiers )
@@ -69,9 +65,10 @@ workflow {
     }
     else {
         log.info("Input file provided. Parsing SRRs from input file.")
-        input_file_channel = Channel.fromPath( params.input_file )
+        Channel.fromPath( params.input_file )
+            .set { input_file_channel }
+        
         parse_srrs( input_file_channel )
-
         srr_tuples = parse_srrs.out.parsed_srrs
                     .collectFile()
                     .splitCsv( header: false) 
