@@ -53,7 +53,7 @@ The pipeline produces several types of output data, including quality control re
 ## Pipeline Overview
 The pipeline uses several different open-source packages, including:
 
-| Process(es) | Package(s) | Description | Official Link | GitHub Repository or Documentation | Version |
+| Process(es) | Package(s) | Description | Official Link | GitHub Repository <br> or Documentation | Version |
 | --- | --- | --- | --- | --- | --- |
 | `download_fasta` | **Biopython, Pysam** | These are used in the `download_fasta` process to fetch a reference genome sequence from NCBI, writing it to a FASTA file, and then compressing the file using pysam's `tabix_compress` function. | [Biopython](https://biopython.org/), [Pysam](https://pysam.readthedocs.io/en/latest/) | [Biopython](https://github.com/biopython/biopython), [Pysam](https://github.com/pysam-developers/pysam) | biopython:1.81, pysam:0.21.0 |
 | `download_fastq` | **aria2** | The `download_fastq` process uses aria2 to download fastq.gz files associated with a given SRR via ftp from ENA. aria2 splits each fastq.gz file into three parts to improve download speeds. | [aria2](https://github.com/aria2/aria2) | [aria2](https://aria2.github.io/) | aria2:1.35.0 |
@@ -70,7 +70,7 @@ The pipeline uses several different open-source packages, including:
 nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main [OPTIONS] OR nextflow run main.nf [OPTIONS]
 
 OPTIONS:
---cpus <int> The number of CPUs you want to use for processing, default: 2. We recommend allocating as many cores as possible to speed up analysis. 
+--cpus <int> The number of CPUs you want to use for processing, default: 2. Only the cpus available to your docker daemon can be used.
 
 --email <ncbi-email-address> Your email address registered with NCBI, required.
 
@@ -121,22 +121,6 @@ To run with an input file, execute the following command in your terminal at the
 nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> 
 ```
 
-## Pipeline Directed Acyclic Graphs (DAGs)
-- DAGs were generated using the `-with-dag` option with both `nextflow run` command, e.g.:
-```bash
-nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> -with-dag dag_name.mmd
-```
-- The contents of the .mmd file were then loaded into [Mermaidv10.2.2 Live Editor](https://mermaid.live/edit#pako:eNpVjk2Lg0AMhv9KyGkL9Q94WGh1t5fCFurN6SFo7AztfDBGpKj_fcd62c0pvM_zhkzY-JYxx-7px0ZTFKhK5SDNoS50NL1Y6m-QZZ_ziQWsd_ya4fhx8tBrH4Jx993mH1cJium8agyijXssGyre_R_HM5T1mYL4cPtLqtHP8FWbi07n_xMdObW-647yjrKGIhQU3wru0XK0ZNr0_rQmCkWzZYV5WlvuaHiKQuWWpNIg_vpyDeYSB97jEFoSLg3dI9ktXH4B_cJWqw) to create the DAGs below.
-
-
-**Input_File Graph**
-***
-![input_file pipeline directed acyclic graph](./input_file_DAG.svg)
-
-**CLI_Input Graph**
-***
-![cli_input pipeline directed acyclic graph](./cli_sra_accession_DAG.svg)
-
 ## Test the Pipeline
 Two input files are provided in the `test_data` directory. To run the pipeline on the test data, execute the following command in your terminal at the root of the cloned repo:
 ```bash
@@ -150,6 +134,14 @@ For this file, process execution should look like:
 and the results directory should contain the following files:
 
 ![results_folder](/test_data/test1/test1_results_folder.png)
+
+**Note:** In case the pipeline fails because memory is exhausted during the bowtie2 process, consider the following steps:
+
+1. **Increase Docker's memory allocation**: Navigate to `Docker Desktop > Settings > Resources > Advanced` and increase the memory limit. 
+2. **Increase Docker's swap memory**: If the first step doesn't resolve the issue, increase Docker's swap memory in the same Advanced Settings. Be aware this may result in a slower pipeline execution.
+
+It's important to note that memory usage is proportional to genome size; for instance, to run the pipeline with the human genome, you'll want to use **at least** 16 GB of RAM, but ideally 32 GB or more.
+
 
 ## Post-Run Cleanup and Archiving
 
@@ -179,6 +171,23 @@ Before running the script, make sure it has execution permissions. You can give 
 chmod +x scripts/archive_nf.sh
 ```
 Remember to run the script from the same directory where you ran the Nextflow pipeline.
+
+## Pipeline Directed Acyclic Graphs (DAGs)
+- DAGs were generated using the `-with-dag` option with both `nextflow run` command, e.g.:
+```bash
+nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> -with-dag dag_name.mmd
+```
+- The contents of the .mmd file were then loaded into [Mermaidv10.2.2 Live Editor](https://mermaid.live/edit#pako:eNpVjk2Lg0AMhv9KyGkL9Q94WGh1t5fCFurN6SFo7AztfDBGpKj_fcd62c0pvM_zhkzY-JYxx-7px0ZTFKhK5SDNoS50NL1Y6m-QZZ_ziQWsd_ya4fhx8tBrH4Jx993mH1cJium8agyijXssGyre_R_HM5T1mYL4cPtLqtHP8FWbi07n_xMdObW-647yjrKGIhQU3wru0XK0ZNr0_rQmCkWzZYV5WlvuaHiKQuWWpNIg_vpyDeYSB97jEFoSLg3dI9ktXH4B_cJWqw) to create the DAGs below.
+
+
+**Input_File Graph**
+***
+![input_file pipeline directed acyclic graph](./input_file_DAG.svg)
+
+**CLI_Input Graph**
+***
+![cli_input pipeline directed acyclic graph](./cli_sra_accession_DAG.svg)
+
 
 ## Reproducibility and Docker Images
 
