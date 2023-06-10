@@ -77,11 +77,11 @@ nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email 
 
 **Input_File Graph**
 ***
-![input_file pipeline directed acyclic graph](./input_file_flowchart.svg)
+![input_file pipeline directed acyclic graph](./input_file_DAG.svg)
 
 **CLI_Input Graph**
 ***
-![cli_input pipeline directed acyclic graph](./cli_sra_accession_flowchart.svg)
+![cli_input pipeline directed acyclic graph](./cli_sra_accession_DAG.svg)
 
 
 ## Usage
