@@ -18,6 +18,6 @@ process run_fasterq_dump {
     script:
     """
     prefetch ${download_status.SimpleName}
-    fasterq-dump ${download_status.SimpleName} --threads ${task.cpus} -b 100M -c 200M -m 8G
+    fasterq-dump ${download_status.SimpleName} --threads ${task.cpus} -b 100M -c 200M -m 4G
     """
 }
