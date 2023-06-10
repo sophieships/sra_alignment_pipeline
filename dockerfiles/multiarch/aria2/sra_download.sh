@@ -45,5 +45,5 @@ else
 fi
 
 if [ ! -f "${accession}_1.fastq.gz" ]; then
-    echo "Download failed for ${accession}" > ${accession}_download_status.txt
+    echo "Download failed for ${accession}" > ${accession}.txt
 fi
