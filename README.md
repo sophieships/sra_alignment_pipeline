@@ -65,25 +65,6 @@ The pipeline uses several different open-source packages, including:
 | `run_bcftools`, `run_bcftools_filter` | **Bcftools** | Bcftools is used in two distinct ways in this pipeline. Initially, in the `run_bcftools` process, Bcftools is employed for calling variants, generating consensus sequences, and producing statistical data and plots associated with the variant calling. Subsequently, in the `run_bcftools_filter` process, Bcftools filters variants based on inclusion or exclusion criteria provided by the user, generating filtered VCF files, statistics, and plots. If neither --include or --exclude options are provided by the user, then the filtering step will be skipped. | [Bcftools](http://www.htslib.org/doc/bcftools.html) | [Bcftools](https://github.com/samtools/bcftools) | bcftools:1.17 |
 | `run_qualimap` | **Qualimap** | The `run_qualimap` process uses qualimab to produce a quality control report for the sorted BAM file produced by samtools. | [Qualimap](http://qualimap.conesalab.org/) | [Qualimap](http://qualimap.conesalab.org/doc_html/index.html) | qualimap:2.2.1 |
 
-
-
-
-## Pipeline Directed Acyclic Graphs (DAGs)
-- DAGs were generated using the `-with-dag` option with both `nextflow run` command, e.g.:
-```bash
-nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> -with-dag dag_name.mmd
-```
-- The contents of the .mmd file were then loaded into [Mermaidv10.2.2 Live Editor](https://mermaid.live/edit#pako:eNpVjk2Lg0AMhv9KyGkL9Q94WGh1t5fCFurN6SFo7AztfDBGpKj_fcd62c0pvM_zhkzY-JYxx-7px0ZTFKhK5SDNoS50NL1Y6m-QZZ_ziQWsd_ya4fhx8tBrH4Jx993mH1cJium8agyijXssGyre_R_HM5T1mYL4cPtLqtHP8FWbi07n_xMdObW-647yjrKGIhQU3wru0XK0ZNr0_rQmCkWzZYV5WlvuaHiKQuWWpNIg_vpyDeYSB97jEFoSLg3dI9ktXH4B_cJWqw) to create the DAGs below.
-
-**Input_File Graph**
-***
-![input_file pipeline directed acyclic graph](./input_file_DAG.svg)
-
-**CLI_Input Graph**
-***
-![cli_input pipeline directed acyclic graph](./cli_sra_accession_DAG.svg)
-
-
 ## Usage
 ```
 nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main [OPTIONS] OR nextflow run main.nf [OPTIONS]
@@ -139,6 +120,22 @@ To run with an input file, execute the following command in your terminal at the
 ```bash
 nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> 
 ```
+
+## Pipeline Directed Acyclic Graphs (DAGs)
+- DAGs were generated using the `-with-dag` option with both `nextflow run` command, e.g.:
+```bash
+nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> -with-dag dag_name.mmd
+```
+- The contents of the .mmd file were then loaded into [Mermaidv10.2.2 Live Editor](https://mermaid.live/edit#pako:eNpVjk2Lg0AMhv9KyGkL9Q94WGh1t5fCFurN6SFo7AztfDBGpKj_fcd62c0pvM_zhkzY-JYxx-7px0ZTFKhK5SDNoS50NL1Y6m-QZZ_ziQWsd_ya4fhx8tBrH4Jx993mH1cJium8agyijXssGyre_R_HM5T1mYL4cPtLqtHP8FWbi07n_xMdObW-647yjrKGIhQU3wru0XK0ZNr0_rQmCkWzZYV5WlvuaHiKQuWWpNIg_vpyDeYSB97jEFoSLg3dI9ktXH4B_cJWqw) to create the DAGs below.
+
+
+**Input_File Graph**
+***
+![input_file pipeline directed acyclic graph](./input_file_DAG.svg)
+
+**CLI_Input Graph**
+***
+![cli_input pipeline directed acyclic graph](./cli_sra_accession_DAG.svg)
 
 ## Test the Pipeline
 Two input files are provided in the `test_data` directory. To run the pipeline on the test data, execute the following command in your terminal at the root of the cloned repo:
