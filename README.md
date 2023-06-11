@@ -6,12 +6,12 @@ SRA Alignment Pipeline
 - [Input Data](#input-data)
 - [Output Data](#output-data)
 - [Pipeline Overview](#pipeline-overview)
-- [Pipeline Graph](#pipeline-graph)
 - [Usage](#usage)
   - [Usage Examples](#usage-examples)
   - [Test the Pipeline](#test-the-pipeline)
   - [Post-Run Cleanup and Archiving](#post-run-cleanup-and-archiving)
-  - [Reproducibility and Docker Images](#reproducibility-and-docker-images)
+- [Pipeline Directed Acyclic Graphs](#pipeline-directed-acyclic-graphs)
+- [Reproducibility and Docker Images](#reproducibility-and-docker-images)
 - [Contributing Guidelines](#contributing-guidelines)
 - [License](#license)
   - [Third-Party Software](#third-party-software)
@@ -76,7 +76,7 @@ OPTIONS:
 
 --architecture <arm64 or x86_64> The architecture of your system, required to pull the correct Docker image for your system.
 
---sra_accession <SRR#> The accession number of the SRA run you want to process, required if no input_file given.
+--sra_accession <sra_accession> The accession number of the SRA run you want to process, required if no input_file given.
 
 --identifier <id#> The identifier of the reference genome you want to align to, required if no input_file given.
 
@@ -95,7 +95,7 @@ OPTIONS:
 ### **Option #1: Run from Github**
 To run with sra_accession and identifier provided on the cli, execute the following command in your terminal
 ```bash
-nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main --sra_accession <SRR> --identifier <ncbi-id> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> 
+nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main --sra_accession <sra_accession> --identifier <ncbi-id> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> 
 ```
 To run with an input file, execute the following command in your terminal
 ```bash
@@ -114,7 +114,7 @@ gh repo clone sophieships/sra_alignment_pipeline
 To run with sra_accession and identifier provided on the cli, execute the following command in your terminal at the root of the cloned repo:
 
 ```bash
-nextflow run main.nf --sra_accession <SRR> --identifier <ncbi-id> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64>
+nextflow run main.nf --sra_accession <sra_accession> --identifier <ncbi-id> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64>
 ```
 To run with an input file, execute the following command in your terminal at the root of the cloned repo:
 ```bash
@@ -172,7 +172,7 @@ chmod +x scripts/archive_nf.sh
 ```
 Remember to run the script from the same directory where you ran the Nextflow pipeline.
 
-## Pipeline Directed Acyclic Graphs (DAGs)
+## Pipeline Directed Acyclic Graphs
 - DAGs were generated using the `-with-dag` option with both `nextflow run` command, e.g.:
 ```bash
 nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> -with-dag dag_name.mmd
