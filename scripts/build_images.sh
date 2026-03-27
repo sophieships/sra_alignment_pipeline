@@ -4,7 +4,7 @@
 docker buildx create --use
 
 # Array of package names
-packages=(aria2 bcftools biopython fastp pigz qualimab samtools sra-parser)
+packages=(aria2 bcftools biopython fastp pigz qualimap samtools sra-parser)
 
 # Loop over the packages and build each Docker image
 for pkg in "${packages[@]}"; do
