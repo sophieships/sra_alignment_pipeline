@@ -90,7 +90,7 @@ workflow {
         sra_accessions_channel = srr_tuples.map{ it[0] }
         identifiers_channel = srr_tuples.map{ it[1] }
 
-        download_fastq( sra_accessions_channel, params.email )
+        download_fastq( sra_accessions_channel )
         
         // run only when download_status is emitted from download_fastq
         run_fasterq_dump( download_fastq.out.download_status )
@@ -116,7 +116,7 @@ workflow {
         sra_accessions_channel = srr_tuples.map{ it[0] }
         identifiers_channel = srr_tuples.map{ it[1] }
 
-        download_fastq( sra_accessions_channel, params.email )
+        download_fastq( sra_accessions_channel )
 
         // run only when download_status is emitted from download_fastq
         run_fasterq_dump( download_fastq.out.download_status )

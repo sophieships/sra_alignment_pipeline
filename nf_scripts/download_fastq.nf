@@ -7,7 +7,6 @@ process download_fastq {
 
     input:
     val sra_accession
-    val emailval
 
     output:
     tuple val(sra_accession), path("${sra_accession}_1.fastq.gz"), optional: true, emit: gzip_forward_reads
@@ -17,6 +16,6 @@ process download_fastq {
 
     script:
     """
-    /scripts/sra_download.sh ${sra_accession} ${emailval}
+    /scripts/sra_download.sh ${sra_accession}
     """
 }
