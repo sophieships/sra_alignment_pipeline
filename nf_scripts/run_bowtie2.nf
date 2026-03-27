@@ -2,8 +2,6 @@ process run_bowtie2 {
     cpus params.cpus
     container "eoksen/bowtie2.5.1:${params.architecture}"
 
-    publishDir "results/${name}/bowtie2", mode: 'copy'
-
     input:
     tuple val(name), path(forward_reads), path(reverse_reads)
     path downloaded_fasta
