@@ -191,7 +191,7 @@ nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email 
 
 ## Reproducibility and Docker Images
 
-To ensure that the results of this pipeline can be reliably reproduced, we run all processes for this pipeline in Docker containers with versioned software. The Docker images used by the pipeline are all available on Docker Hub. The names and tags for each image can be found in its individual nextflow process. For example, the `run_fastp` process uses the eoksen/fastp:v0.23.3 image. You can find this image on Docker Hub here.
+To ensure that the results of this pipeline can be reliably reproduced, we run all processes for this pipeline in Docker containers with versioned software. The Docker images used by the pipeline are all available on Docker Hub. The names and tags for each image can be found in its individual nextflow process. For example, the `run_fastp` process uses the eoksen/fastp:v0.23.3 image. You can find this image on [Docker Hub](https://hub.docker.com/u/eoksen).
 
 However, if you wish to build these Docker images on your own system, you can do so using the Dockerfiles and scripts provided in the dockerfiles directory. To build all of these images, you can use the scripts/build_images.sh script. This script will:
 
