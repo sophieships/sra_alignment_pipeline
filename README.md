@@ -82,7 +82,7 @@ OPTIONS:
 
 --input_file <path> Path to input file. Takes a CSV file with two columns: column 1: sra_accession, column 2: identifier, required if no --sra_accession given.
 
---include <expressions> or --exclude <expressions> A filter to apply to the variant calling process. This should be a string with the filtering criteria in single quotes, like 'DP>200'. More information about this function can be found at bcftools filter manual and the allowed expressions for this filter can be found here. If you do not want to filter the variants, you can leave this parameter blank.
+--include <expressions> or --exclude <expressions> A filter to apply to the variant calling process. This should be a string with the filtering criteria in single quotes, like 'DP>200'. More information about this function can be found at the [bcftools filter manual](http://www.htslib.org/doc/bcftools.html#filter) and the allowed [bcftools expressions](http://www.htslib.org/doc/bcftools.html#expressions) for this filter. If you do not want to filter the variants, you can leave this parameter blank.
 
 --ploidy <int> The ploidy of the organism you are analyzing, default: 1.
 
