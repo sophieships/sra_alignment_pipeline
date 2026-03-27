@@ -158,7 +158,7 @@ scripts/archive_nf.sh
 
 Or you can run the pipeline and the script in one command:
 ```bash
-nextflow run main.nf --input_file test_data/test1.csv --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> && scripts/archive_nf.sh
+nextflow run main.nf --input_file test_data/test1/test1.csv --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> && scripts/archive_nf.sh
 ```
 This command will:
 
