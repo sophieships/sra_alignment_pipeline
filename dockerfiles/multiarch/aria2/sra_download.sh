@@ -1,9 +1,8 @@
 #!/bin/bash
 
 accession="$1"
-email="$2"
 
-echo "accession"
+echo "$accession"
 
 base="ftp://ftp.sra.ebi.ac.uk/vol1/fastq"
 subdir1="${accession:0:6}"
@@ -14,7 +13,7 @@ ftp_link_1="${base}/${subdir1}/${subdir2}/${accession}/${accession}_1.fastq.gz"
 ftp_link_2="${base}/${subdir1}/${subdir2}/${accession}/${accession}_2.fastq.gz"
 ftp_link_3="${base}/${subdir1}/${subdir3}/${accession}_1.fastq.gz"
 ftp_link_4="${base}/${subdir1}/${subdir3}/${accession}_2.fastq.gz"
-echo "Trying to download $srr from:"
+echo "Trying to download $accession from:"
 echo "$ftp_link_1"
 echo "$ftp_link_2"
 echo "$ftp_link_3"
