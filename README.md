@@ -237,7 +237,7 @@ Thank you for your interest in contributing to our project!
 
 ## License
 
-This project is licensed under the terms of the GNU General Public License v3.0. For the full text of the license, see the [LICENSE.txt](https://github.com/sophieships/sra_alignment_pipeline/LICENSE.txt) file.
+This project is licensed under the terms of the GNU General Public License v3.0. For the full text of the license, see the [LICENSE.txt](./LICENSE.txt) file.
 
 ### **Third-Party Software**
 
