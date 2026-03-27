@@ -26,7 +26,7 @@ SRA Alignment Pipeline
 **Important:** Before you can use this pipeline, you need to install Nextflow and Docker. 
 - Nextflow can be installed by following the instructions [here](https://www.nextflow.io/docs/latest/getstarted.html). 
 - Docker can be installed by following the instructions [here](https://docs.docker.com/get-docker/). 
-- This pipeline has been tested with Nextflow version 22.10.7 and 23.04.0 and Docker engine version 23.0.5 on both arm64 and x86 architectures.
+- This pipeline has been tested with Nextflow version 22.10.7 and 23.04.0 and Docker engine version 23.0.5 on both arm64 and x86 architectures. DSL2 compatibility has been updated for Nextflow 22.x+ (which defaults to DSL2).
 
 ## Input Data
 
