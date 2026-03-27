@@ -1,3 +1,34 @@
+if (params.help) {
+    log.info """
+    ======================
+    SRA Alignment Pipeline
+    ======================
+
+    Usage:
+      nextflow run main.nf [OPTIONS]
+      nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main [OPTIONS]
+
+    Required:
+      --email <address>         NCBI-registered email address
+      --cpus <int>              Number of CPUs (default: 2)
+
+    Input (one required):
+      --sra_accession <id>      SRA accession number (requires --identifier)
+      --identifier <id>         NCBI nucleotide identifier for reference genome
+      --input_file <path>       CSV with columns: sra_accession, identifier
+
+    Optional:
+      --architecture <arch>     arm64 or x86_64 (auto-detected if omitted)
+      --L <int>                 Bowtie2 seed length (default: 22)
+      --X <int>                 Bowtie2 max insert size (default: 600)
+      --ploidy <int>            Ploidy for variant calling (default: 1)
+      --include <expr>          bcftools filter inclusion expression
+      --exclude <expr>          bcftools filter exclusion expression
+      --help                    Show this help message
+    """.stripIndent()
+    exit 0
+}
+
 // If no SRA accession number, identifier, or input file is provided, throw an error.
 if ( params.sra_accession == '' && params.identifier == '' && params.input_file == '' ) {
     error "You must provide either an SRA accession number and identifier with --sra_accession and --identifier, or an input file with --input_file"
