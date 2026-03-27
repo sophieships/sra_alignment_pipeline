@@ -56,8 +56,9 @@ if ( !params.cpus.toString().isNumber() ) {
 
 // If the provided architecture is neither 'arm64' nor 'x86_64', throw an error.
 if ( params.architecture != 'arm64' && params.architecture != 'x86_64' ) {
-    error("You must specify --architecture 'arm64' or 'x86_64' to run the bowtie2 docker container. \nTo check your system's architecture: \n- Unix-based (Linux/MacOS/WSL2): use the 'uname -m' command \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
+    error("Could not auto-detect system architecture and no valid --architecture was provided. Please specify --architecture 'arm64' or 'x86_64'. Your system reports: '${"uname -m".execute().text.trim()}'")
 }
+log.info("Using architecture: ${params.architecture}")
 
 include { get_srrs } from './nf_scripts/get_srrs'
 include { parse_srrs } from './nf_scripts/parse_srrs'

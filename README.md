@@ -74,7 +74,7 @@ OPTIONS:
 
 --email <ncbi-email-address> Your email address registered with NCBI, required.
 
---architecture <arm64 or x86_64> The architecture of your system, required to pull the correct Docker image for your system.
+--architecture <arm64 or x86_64> System architecture for the bowtie2 Docker image. Auto-detected if not provided; override with --architecture arm64 or --architecture x86_64.
 
 --sra_accession <sra_accession> The accession number of the SRA run you want to process, required if no input_file given.
 
@@ -95,12 +95,10 @@ OPTIONS:
 ### **Option #1: Run from Github**
 To run with sra_accession and identifier provided on the cli, execute the following command in your terminal
 ```bash
-nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main --sra_accession <sra_accession> --identifier <ncbi-id> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> 
-```
+nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main --sra_accession <sra_accession> --identifier <ncbi-id> --cpus <int> --email <ncbi-email-address>```
 To run with an input file, execute the following command in your terminal
 ```bash
-nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> 
-```
+nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address>```
 
 ### **Option #2: Clone repo from Github to your local environment**
 You can clone the repo using either by HTTPS:
@@ -114,18 +112,16 @@ gh repo clone sophieships/sra_alignment_pipeline
 To run with sra_accession and identifier provided on the cli, execute the following command in your terminal at the root of the cloned repo:
 
 ```bash
-nextflow run main.nf --sra_accession <sra_accession> --identifier <ncbi-id> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64>
+nextflow run main.nf --sra_accession <sra_accession> --identifier <ncbi-id> --cpus <int> --email <ncbi-email-address>
 ```
 To run with an input file, execute the following command in your terminal at the root of the cloned repo:
 ```bash
-nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> 
-```
+nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address>```
 
 ## Test the Pipeline
 Two input files are provided in the `test_data` directory. To run the pipeline on the test data, execute the following command in your terminal at the root of the cloned repo:
 ```bash
-nextflow run main.nf --input_file test_data/test1/test1.csv --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> 
-```
+nextflow run main.nf --input_file test_data/test1/test1.csv --cpus <int> --email <ncbi-email-address>```
 
 For this file, process execution should look like:
 
@@ -158,7 +154,7 @@ scripts/archive_nf.sh
 
 Or you can run the pipeline and the script in one command:
 ```bash
-nextflow run main.nf --input_file test_data/test1/test1.csv --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> && scripts/archive_nf.sh
+nextflow run main.nf --input_file test_data/test1/test1.csv --cpus <int> --email <ncbi-email-address> && scripts/archive_nf.sh
 ```
 This command will:
 
@@ -175,7 +171,7 @@ Remember to run the script from the same directory where you ran the Nextflow pi
 ## Pipeline Directed Acyclic Graphs
 - DAGs were generated using the `-with-dag` option with both `nextflow run` command, e.g.:
 ```bash
-nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> --architecture <arm64 or x86_64> -with-dag dag_name.mmd
+nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> -with-dag dag_name.mmd
 ```
 - The contents of the .mmd file were then loaded into [Mermaidv10.2.2 Live Editor](https://mermaid.live/edit#pako:eNpVjk2Lg0AMhv9KyGkL9Q94WGh1t5fCFurN6SFo7AztfDBGpKj_fcd62c0pvM_zhkzY-JYxx-7px0ZTFKhK5SDNoS50NL1Y6m-QZZ_ziQWsd_ya4fhx8tBrH4Jx993mH1cJium8agyijXssGyre_R_HM5T1mYL4cPtLqtHP8FWbi07n_xMdObW-647yjrKGIhQU3wru0XK0ZNr0_rQmCkWzZYV5WlvuaHiKQuWWpNIg_vpyDeYSB97jEFoSLg3dI9ktXH4B_cJWqw) to create the DAGs below.
 
