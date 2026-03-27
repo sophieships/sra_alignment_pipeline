@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y \
     liblzma-dev \
     libcurl4-gnutls-dev \
     perl \
-    lua5.3
+    lua5.3 \
+    procps
 
 WORKDIR /tmp
 

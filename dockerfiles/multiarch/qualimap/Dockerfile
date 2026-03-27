@@ -1,5 +1,5 @@
 # Using Debian as base image
-FROM debian:buster
+FROM debian:bullseye
 
 # Set environment variables
 ENV QUALIMAP_VERSION="2.2.1" \
@@ -24,7 +24,8 @@ RUN apt-get update && apt-get install -y \
     gfortran \
     unzip \
     libbz2-dev \
-    liblzma-dev  # Add this line
+    liblzma-dev \
+    procps
 
 # Install R
 RUN curl -O https://cran.r-project.org/src/base/R-3/R-${R_VERSION}.tar.gz && \

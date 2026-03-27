@@ -2,7 +2,7 @@ FROM ubuntu:20.04
 
 # Install dependencies
 RUN apt-get update && \
-    apt-get install -y curl unzip python3 perl && \
+    apt-get install -y curl unzip python3 perl procps && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the working directory

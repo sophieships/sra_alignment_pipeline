@@ -7,7 +7,7 @@ ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y git autoconf automake libtool nasm yasm cmake build-essential zlib1g-dev
+    apt-get install -y git autoconf automake libtool nasm yasm cmake build-essential zlib1g-dev procps
 
 RUN gcc --version > versions.txt && \
     g++ --version >> versions.txt && \

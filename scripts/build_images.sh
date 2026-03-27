@@ -1,7 +1,12 @@
 #!/bin/bash
+set -e
 
-# Create and use a new builder instance
-docker buildx create --use
+# Create or reuse a named builder instance (avoids accumulating anonymous builders)
+BUILDER_NAME="sra-pipeline-builder"
+if ! docker buildx inspect "$BUILDER_NAME" &>/dev/null; then
+    docker buildx create --name "$BUILDER_NAME"
+fi
+docker buildx use "$BUILDER_NAME"
 
 # Associative array mapping directory names to Docker Hub image tags
 declare -A image_tags=(
@@ -16,19 +21,25 @@ declare -A image_tags=(
 )
 
 # Loop over the packages and build each Docker image
+# Build context is the Dockerfile's directory so COPY commands resolve correctly
 for pkg in "${!image_tags[@]}"; do
-    docker buildx build --platform linux/amd64,linux/arm64 -t "${image_tags[$pkg]}" -f "./dockerfiles/multiarch/$pkg/Dockerfile" .
+    echo "=== Building ${image_tags[$pkg]} ==="
+    docker buildx build --platform linux/amd64,linux/arm64 -t "${image_tags[$pkg]}" --push -f "./dockerfiles/multiarch/$pkg/Dockerfile" "./dockerfiles/multiarch/$pkg"
 done
 
 # Build the bowtie2 Docker image based on user's architecture
 arch=$1
 if [ "$arch" = "arm" ]; then
-    docker buildx build --platform linux/arm64 -t "eoksen/bowtie2.5.1:arm64" -f "./dockerfiles/arm/bowtie2.51/Dockerfile" .
+    echo "=== Building eoksen/bowtie2.5.1:arm64 ==="
+    docker buildx build --platform linux/arm64 -t "eoksen/bowtie2.5.1:arm64" --push -f "./dockerfiles/arm/bowtie2.51/Dockerfile" "./dockerfiles/arm/bowtie2.51"
 elif [ "$arch" = "x86" ]; then
-    docker buildx build --platform linux/amd64 -t "eoksen/bowtie2.5.1:x86_64" -f "./dockerfiles/x86/bowtie2.51/Dockerfile" .
+    echo "=== Building eoksen/bowtie2.5.1:x86_64 ==="
+    docker buildx build --platform linux/amd64 -t "eoksen/bowtie2.5.1:x86_64" --push -f "./dockerfiles/x86/bowtie2.51/Dockerfile" "./dockerfiles/x86/bowtie2.51"
 elif [ "$arch" = "multiarch" ]; then
-    docker buildx build --platform linux/arm64 -t "eoksen/bowtie2.5.1:arm64" -f "./dockerfiles/arm/bowtie2.51/Dockerfile" .
-    docker buildx build --platform linux/amd64 -t "eoksen/bowtie2.5.1:x86_64" -f "./dockerfiles/x86/bowtie2.51/Dockerfile" .
+    echo "=== Building eoksen/bowtie2.5.1:arm64 ==="
+    docker buildx build --platform linux/arm64 -t "eoksen/bowtie2.5.1:arm64" --push -f "./dockerfiles/arm/bowtie2.51/Dockerfile" "./dockerfiles/arm/bowtie2.51"
+    echo "=== Building eoksen/bowtie2.5.1:x86_64 ==="
+    docker buildx build --platform linux/amd64 -t "eoksen/bowtie2.5.1:x86_64" --push -f "./dockerfiles/x86/bowtie2.51/Dockerfile" "./dockerfiles/x86/bowtie2.51"
 else
     echo "Invalid architecture. Please enter 'arm', 'x86', or 'multiarch'."
 fi
