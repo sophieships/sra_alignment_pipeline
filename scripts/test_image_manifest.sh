@@ -141,6 +141,9 @@ disabled_manifest="${tmp_root}/disabled.json"
 cat > "${disabled_manifest}" <<'JSON'
 {"images":{"enabled_one":{"runtime_name":"foo","version":"1","build":{"enabled":true,"dockerfile":"a","context":"a"}},"disabled_one":{"runtime_name":"bar","version":"1","build":{"enabled":false,"dockerfile":"b","context":"b"}}}}
 JSON
+expect_output_equals \
+    "enabled_one" \
+    python3 scripts/image_manifest.py list-targets --config "${disabled_manifest}"
 expect_failure_contains \
     "Disabled build target(s): disabled_one" \
     python3 scripts/image_manifest.py build-targets --config "${disabled_manifest}" --targets disabled_one
@@ -188,6 +191,17 @@ if [[ "${manifest_change_output}" != *'"name": "foo"'* ]]; then
     exit 1
 fi
 
+absolute_manifest_change_output="$(
+    python3 "${REPO_ROOT}/scripts/image_manifest.py" \
+        build-targets \
+        --config "${manifest_change_dir}/conf/images.json" \
+        --changed-since HEAD
+)"
+if [[ "${absolute_manifest_change_output}" != *'"name": "foo"'* ]]; then
+    echo "Expected manifest-only change with absolute config path to include foo target, got: ${absolute_manifest_change_output}" >&2
+    exit 1
+fi
+
 dockerfile_change_dir="${tmp_root}/dockerfile-change"
 mkdir -p "${dockerfile_change_dir}/conf" "${dockerfile_change_dir}/dockerfiles/foo"
 cd "${dockerfile_change_dir}"
@@ -209,6 +223,37 @@ if [[ "${dockerfile_change_output}" != *'"name": "foo"'* ]]; then
     exit 1
 fi
 
+intersection_dir="${tmp_root}/targets-intersection"
+mkdir -p "${intersection_dir}/conf" "${intersection_dir}/dockerfiles/foo" "${intersection_dir}/dockerfiles/bar"
+cd "${intersection_dir}"
+git init -q
+git config user.email "ci@example.com"
+git config user.name "CI"
+cat > conf/images.json <<'JSON'
+{"defaults":{"registry":"docker.io","namespace":"ns"},"images":{"foo":{"runtime_name":"foo","version":"1","build":{"enabled":true,"dockerfile":"dockerfiles/foo/Dockerfile","context":"dockerfiles/foo"}},"bar":{"runtime_name":"bar","version":"1","build":{"enabled":true,"dockerfile":"dockerfiles/bar/Dockerfile","context":"dockerfiles/bar"}}}}
+JSON
+cat > dockerfiles/foo/Dockerfile <<'EOF'
+FROM scratch
+EOF
+cat > dockerfiles/bar/Dockerfile <<'EOF'
+FROM scratch
+EOF
+git add .
+git commit -qm init
+printf '\nLABEL changed=1\n' >> dockerfiles/foo/Dockerfile
+intersection_output="$(
+    python3 "${REPO_ROOT}/scripts/image_manifest.py" \
+        build-targets \
+        --config conf/images.json \
+        --targets foo,bar \
+        --changed-since HEAD
+)"
+expect_json_array_length "1" "${intersection_output}"
+if [[ "${intersection_output}" != *'"name": "foo"'* ]] || [[ "${intersection_output}" == *'"name": "bar"'* ]]; then
+    echo "Expected --targets with --changed-since to keep only changed selected targets, got: ${intersection_output}" >&2
+    exit 1
+fi
+
 injection_probe_path="${tmp_root}/git-output.txt"
 expect_failure_contains \
     "Git command failed" \
@@ -217,3 +262,10 @@ if [[ -e "${injection_probe_path}" ]]; then
     echo "Unexpected file created by git option injection probe: ${injection_probe_path}" >&2
     exit 1
 fi
+
+missing_git_bin="${tmp_root}/missing-git-bin"
+mkdir -p "${missing_git_bin}"
+ln -s "$(command -v python3)" "${missing_git_bin}/python3"
+expect_failure_contains \
+    "Git is required for --changed-since but was not found on PATH." \
+    env PATH="${missing_git_bin}" python3 "${REPO_ROOT}/scripts/image_manifest.py" build-targets --config "${REPO_ROOT}/conf/images.json" --changed-since HEAD

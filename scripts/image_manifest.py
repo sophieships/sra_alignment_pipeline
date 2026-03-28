@@ -11,15 +11,20 @@ from typing import Any, Optional
 
 
 def load_manifest(config_path: str) -> tuple[dict[str, Any], Path]:
-    """Load the manifest JSON from disk and return it as a dictionary."""
+    """Load the manifest JSON from disk and return the parsed object plus its resolved path."""
     config_file = Path(config_path).expanduser().resolve()
     try:
         with config_file.open("r", encoding="utf-8") as handle:
             manifest = json.load(handle)
     except FileNotFoundError as exc:
         raise SystemExit(f"Manifest file not found: {config_file}") from exc
+    except UnicodeDecodeError as exc:
+        raise SystemExit(f"Manifest file is not valid UTF-8: {config_file} ({exc})") from exc
     except JSONDecodeError as exc:
         raise SystemExit(f"Manifest file is not valid JSON: {config_file} ({exc.msg})") from exc
+    except OSError as exc:
+        detail = exc.strerror or str(exc)
+        raise SystemExit(f"Failed to read manifest file: {config_file} ({detail})") from exc
 
     if not isinstance(manifest, dict):
         raise SystemExit(f"Manifest top-level JSON value must be an object: {config_file}")
@@ -90,30 +95,73 @@ def normalize_path(value: str) -> str:
     return value.replace("\\", "/").strip("/")
 
 
+def git_command_text(args: list[str]) -> str:
+    """Return a shell-style label for error messages."""
+    return " ".join(args)
+
+
+def run_git_process(args: list[str], *, check: bool) -> subprocess.CompletedProcess[str]:
+    """Run git and return the completed process with consistent launch-error handling."""
+    try:
+        return subprocess.run(
+            args,
+            check=check,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise SystemExit("Git is required for --changed-since but was not found on PATH.") from exc
+    except OSError as exc:
+        detail = exc.strerror or str(exc)
+        raise SystemExit(f"Failed to execute git command: {git_command_text(args)} ({detail})") from exc
+
+
+def ensure_git_repository() -> None:
+    """Ensure the current working directory is inside a git repository."""
+    result = run_git_process(["git", "rev-parse", "--is-inside-work-tree"], check=False)
+    if result.returncode == 0 and result.stdout.strip() == "true":
+        return
+
+    stderr = result.stderr.strip().lower()
+    if "not a git repository" in stderr:
+        raise SystemExit("--changed-since requires running inside a git repository.")
+
+    detail = result.stderr.strip() or f"exit status {result.returncode}"
+    raise SystemExit(
+        f"Git command failed: {git_command_text(['git', 'rev-parse', '--is-inside-work-tree'])} ({detail})"
+    )
+
+
+def git_repository_root() -> Path:
+    """Return the current repository root."""
+    resolved_root = run_git_command(["git", "rev-parse", "--show-toplevel"])
+    if len(resolved_root) != 1:
+        raise SystemExit("Git repository root did not resolve uniquely.")
+    return Path(resolved_root[0]).expanduser().resolve()
+
+
 def has_git_head() -> bool:
     """Return True when the current repository has at least one commit."""
-    result = subprocess.run(
-        ["git", "rev-parse", "--verify", "HEAD"],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    return result.returncode == 0
+    result = run_git_process(["git", "rev-parse", "--verify", "HEAD"], check=False)
+    if result.returncode == 0:
+        return True
+
+    stderr = result.stderr.strip().lower()
+    if "needed a single revision" in stderr or "ambiguous argument 'head'" in stderr:
+        return False
+
+    detail = result.stderr.strip() or f"exit status {result.returncode}"
+    raise SystemExit(f"Git command failed: {git_command_text(['git', 'rev-parse', '--verify', 'HEAD'])} ({detail})")
 
 
 def run_git_command(args: list[str]) -> list[str]:
     """Run a git command and return trimmed non-empty output lines."""
     try:
-        result = subprocess.run(
-            args,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+        result = run_git_process(args, check=True)
     except subprocess.CalledProcessError as exc:
         stderr = exc.stderr.strip()
         detail = stderr or f"exit status {exc.returncode}"
-        raise SystemExit(f"Git command failed: {' '.join(args)} ({detail})") from exc
+        raise SystemExit(f"Git command failed: {git_command_text(args)} ({detail})") from exc
 
     return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
@@ -126,8 +174,10 @@ def resolve_revision(revision: str) -> str:
     return resolved[0]
 
 
-def gather_changed_files(changed_since: Optional[str]) -> set[str]:
+def gather_changed_files(changed_since: Optional[str]) -> tuple[set[str], Path]:
     """Collect tracked and untracked file changes relevant to target selection."""
+    ensure_git_repository()
+    repo_root = git_repository_root()
     changed_files: set[str] = set()
     repo_has_head = has_git_head()
 
@@ -138,7 +188,15 @@ def gather_changed_files(changed_since: Optional[str]) -> set[str]:
     if repo_has_head:
         changed_files.update(run_git_command(["git", "diff", "--name-only", "HEAD", "--"]))
     changed_files.update(run_git_command(["git", "ls-files", "--others", "--exclude-standard", "--"]))
-    return {normalize_path(path) for path in changed_files}
+    return {normalize_path(path) for path in changed_files}, repo_root
+
+
+def repo_relative_path(path: Path, repo_root: Path) -> Optional[str]:
+    """Return a normalized git-relative path when the file is inside the repository."""
+    try:
+        return normalize_path(str(path.resolve().relative_to(repo_root)))
+    except ValueError:
+        return None
 
 
 def path_matches_candidate(changed_file: str, candidate: str) -> bool:
@@ -150,7 +208,6 @@ def path_matches_candidate(changed_file: str, candidate: str) -> bool:
 def build_targets(
     manifest: dict[str, Any],
     config_file: Path,
-    config_path: str,
     selected_targets: Optional[list[str]],
     changed_since: Optional[str],
 ) -> list[dict]:
@@ -182,9 +239,9 @@ def build_targets(
         target_names = list(available_targets.keys())
 
     if changed_since:
-        changed_files = gather_changed_files(changed_since)
-        manifest_path = normalize_path(config_path)
-        if manifest_path in changed_files:
+        changed_files, repo_root = gather_changed_files(changed_since)
+        manifest_path = repo_relative_path(config_file, repo_root)
+        if manifest_path and manifest_path in changed_files:
             changed_target_names = target_names
         else:
             changed_target_names = [
@@ -238,14 +295,14 @@ def main() -> int:
     manifest, config_file = load_manifest(args.config)
 
     if args.command == "list-targets":
-        targets = build_targets(manifest, config_file, args.config, None, None)
+        targets = build_targets(manifest, config_file, None, None)
         for target in targets:
             print(target["name"])
         return 0
 
     selected_targets = [value.strip() for value in args.targets.split(",") if value.strip()]
     changed_since = args.changed_since.strip() or None
-    targets = build_targets(manifest, config_file, args.config, selected_targets or None, changed_since)
+    targets = build_targets(manifest, config_file, selected_targets or None, changed_since)
     json.dump(targets, sys.stdout)
     sys.stdout.write("\n")
     return 0
