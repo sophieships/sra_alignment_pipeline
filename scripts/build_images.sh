@@ -239,6 +239,7 @@ build_target() {
     local status="success"
     local failure_reason=""
 
+    # Keep per-target build state local so failed setup still yields a benchmark row.
     local -a build_cmd
     build_cmd=(
         docker buildx build
@@ -513,6 +514,7 @@ PY
     die "Failed to prepare build target rows."
 fi
 
+# Expand the resolved target JSON once so helper failures cannot disappear inside a read loop.
 while IFS=$'\t' read -r name runtime_name version dockerfile context build_args_json; do
     [[ -z "${name}" ]] && continue
 

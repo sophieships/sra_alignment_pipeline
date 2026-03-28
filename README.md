@@ -26,7 +26,7 @@ SRA Alignment Pipeline
 **Important:** Before you can use this pipeline, you need to install Nextflow and Docker. 
 - Nextflow can be installed by following the instructions [here](https://www.nextflow.io/docs/latest/getstarted.html). 
 - Docker can be installed by following the instructions [here](https://docs.docker.com/get-docker/). 
-- This pipeline has been tested with Nextflow version 22.10.7 and 23.04.0 and Docker engine version 23.0.5 on both arm64 and x86 architectures. DSL2 compatibility has been updated for Nextflow 22.x+ (which defaults to DSL2).
+- This pipeline now resolves its runtime images from a tracked image manifest and has been modernized for current multi-architecture Docker builds. The local validation in this repository was performed with Nextflow 22.10.7 and Docker 29.x on arm64.
 
 ## Input Data
 
@@ -63,15 +63,15 @@ The pipeline uses several different open-source packages, including:
 
 | Process(es) | Package(s) | Description | Official Link | GitHub Repository <br> or Documentation | Version |
 | --- | --- | --- | --- | --- | --- |
-| `download_fasta` | **Biopython, Pysam** | These are used in the `download_fasta` process to fetch a reference genome sequence from NCBI, writing it to a FASTA file, and then compressing the file using pysam's `tabix_compress` function. | [Biopython](https://biopython.org/), [Pysam](https://pysam.readthedocs.io/en/latest/) | [Biopython](https://github.com/biopython/biopython), [Pysam](https://github.com/pysam-developers/pysam) | biopython:1.81, pysam:0.21.0 |
-| `download_fastq` | **aria2** | The `download_fastq` process uses aria2 to download fastq.gz files associated with a given SRR via ftp from ENA. aria2 splits each fastq.gz file into three parts to improve download speeds. | [aria2](https://github.com/aria2/aria2) | [aria2](https://aria2.github.io/) | aria2:1.35.0 |
-| `run_fasterq_dump` | **prefetch, fasterq-dump** | The `run_fasterq_dump` process uses `prefetch` to download the .sra file associated with the SRR accession and then `fasterq-dump` to extracts reads from the .sra file in FastQ format, splitting the reads into forward and reverse reads while skipping technical reads. **Note:** this package only runs if the fastq_download fails. | [SRA Toolkit](https://www.ncbi.nlm.nih.gov/sra/docs/) | [SRA Toolkit](https://github.com/ncbi/sra-tools) | sra-tools:3.0.1 |
-| `run_pigz` | **pigz** | The `run_pigz` process uses pigz (parallel gzip) to compress the fastq files from fasterq-dump. **Note:** this package only runs if the fastq_download fails. | [pigz](https://zlib.net/pigz/) | [pigz](https://github.com/madler/pigz) | pigz:2.6-1 |
-| `run_fastp` | **fastp** | The `run_fastp` process uses fastp to perform quality control and preprocessing of FastQ files. It trims the raw reads and generates cleaned up forward and reverse reads. The `run_fastp` process also outputs a report showing sequence quality and other statistics before and after trimming.| [Fastp](https://opengene.org/) | [Fastp](https://github.com/OpenGene/fastp) | fastp:0.23.3 |
-| `run_bowtie2` | **Bowtie2** | The `run_bowtie2` process uses bowtie2 to align the cleaned-up sequence reads to the reference genome downloaded earlier. `run_bowtie2` also generates alignment statistics and files for both mapped and unmapped reads. | [Bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml) | [Bowtie2](https://github.com/BenLangmead/bowtie2) | bowtie2:2.5.1 |
-| `run_samtools` | **Samtools** | The `run_samtools` uses samtools to convert the alignment file from `run_bowtie2` from SAM to BAM and then sorts the BAM file. Additionally, samtools indexes the BAM file and the reference genome. | [Samtools](http://www.htslib.org/doc/samtools.html) | [Samtools](https://github.com/samtools/samtools) | samtools:1.17 |
-| `run_bcftools`, `run_bcftools_filter` | **Bcftools** | Bcftools is used in two distinct ways in this pipeline. Initially, in the `run_bcftools` process, Bcftools is employed for calling variants, generating consensus sequences, and producing statistical data and plots associated with the variant calling. Subsequently, in the `run_bcftools_filter` process, Bcftools filters variants based on inclusion or exclusion criteria provided by the user, generating filtered VCF files, statistics, and plots. If neither --include or --exclude options are provided by the user, then the filtering step will be skipped. | [Bcftools](http://www.htslib.org/doc/bcftools.html) | [Bcftools](https://github.com/samtools/bcftools) | bcftools:1.17 |
-| `run_qualimap` | **Qualimap** | The `run_qualimap` process uses qualimab to produce a quality control report for the sorted BAM file produced by samtools. | [Qualimap](http://qualimap.conesalab.org/) | [Qualimap](http://qualimap.conesalab.org/doc_html/index.html) | qualimap:2.2.1 |
+| `download_fasta` | **Biopython, Pysam** | These are used in the `download_fasta` process to fetch a reference genome sequence from NCBI, writing it to a FASTA file, and then compressing the file using pysam's `tabix_compress` function. | [Biopython](https://biopython.org/), [Pysam](https://pysam.readthedocs.io/en/latest/) | [Biopython](https://github.com/biopython/biopython), [Pysam](https://github.com/pysam-developers/pysam) | biopython:1.86, pysam:0.23.3 |
+| `download_fastq` | **aria2** | The `download_fastq` process uses aria2 to download fastq.gz files associated with a given SRR via ftp from ENA. aria2 splits each fastq.gz file into three parts to improve download speeds. | [aria2](https://github.com/aria2/aria2) | [aria2](https://aria2.github.io/) | aria2:1.37.0 |
+| `run_fasterq_dump` | **prefetch, fasterq-dump** | The `run_fasterq_dump` process uses `prefetch` to download the .sra file associated with the SRR accession and then `fasterq-dump` extracts reads from the .sra file in FastQ format, splitting the reads into forward and reverse reads while skipping technical reads. **Note:** this package only runs if the fastq_download fails. | [SRA Toolkit](https://www.ncbi.nlm.nih.gov/sra/docs/) | [SRA Toolkit](https://github.com/ncbi/sra-tools) | sra-tools:3.2.1 |
+| `run_pigz` | **pigz** | The `run_pigz` process uses pigz (parallel gzip) to compress the fastq files from fasterq-dump. **Note:** this package only runs if the fastq_download fails. | [pigz](https://zlib.net/pigz/) | [Pigz](https://github.com/madler/pigz) | pigz:2.8 |
+| `run_fastp` | **fastp** | The `run_fastp` process uses fastp to perform quality control and preprocessing of FastQ files. It trims the raw reads and generates cleaned up forward and reverse reads. The `run_fastp` process also outputs a report showing sequence quality and other statistics before and after trimming. | [Fastp](https://opengene.org/) | [Fastp](https://github.com/OpenGene/fastp) | fastp:1.3.0 |
+| `run_bowtie2` | **Bowtie2** | The `run_bowtie2` process uses bowtie2 to align the cleaned-up sequence reads to the reference genome downloaded earlier. `run_bowtie2` also generates alignment statistics and files for both mapped and unmapped reads. | [Bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml) | [Bowtie2](https://github.com/BenLangmead/bowtie2) | bowtie2:2.5.5 |
+| `run_samtools` | **Samtools** | The `run_samtools` uses samtools to convert the alignment file from `run_bowtie2` from SAM to BAM and then sorts the BAM file. Additionally, samtools indexes the BAM file and the reference genome. | [Samtools](http://www.htslib.org/doc/samtools.html) | [Samtools](https://github.com/samtools/samtools) | samtools:1.23.1 |
+| `run_bcftools`, `run_bcftools_filter` | **Bcftools** | Bcftools is used in two distinct ways in this pipeline. Initially, in the `run_bcftools` process, Bcftools is employed for calling variants, generating consensus sequences, and producing statistical data and plots associated with the variant calling. Subsequently, in the `run_bcftools_filter` process, Bcftools filters variants based on inclusion or exclusion criteria provided by the user, generating filtered VCF files, statistics, and plots. If neither --include or --exclude options are provided by the user, then the filtering step will be skipped. | [Bcftools](http://www.htslib.org/doc/bcftools.html) | [Bcftools](https://github.com/samtools/bcftools) | bcftools:1.23.1 |
+| `run_qualimap` | **Qualimap** | The `run_qualimap` process uses qualimap to produce a quality control report for the sorted BAM file produced by samtools. | [Qualimap](http://qualimap.conesalab.org/) | [Qualimap](http://qualimap.conesalab.org/doc_html/index.html) | qualimap:2.3 |
 
 ## Usage
 ```
@@ -82,7 +82,11 @@ OPTIONS:
 
 --email <ncbi-email-address> Your email address registered with NCBI, required.
 
---architecture <arm64 or x86_64> System architecture for the bowtie2 Docker image. Auto-detected if not provided; override with --architecture arm64 or --architecture x86_64.
+--image_manifest <path> Path to the tracked container image manifest. Default: conf/images.json.
+
+--container_registry <registry> Override the default registry defined in the tracked image manifest.
+
+--container_namespace <namespace> Override the default namespace defined in the tracked image manifest.
 
 --sra_accession <sra_accession> The accession number of the SRA run you want to process, required if no input_file given.
 
@@ -197,21 +201,52 @@ nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email 
 
 ## Reproducibility and Docker Images
 
-To ensure that the results of this pipeline can be reliably reproduced, we run all processes for this pipeline in Docker containers with versioned software. The Docker images used by the pipeline are all available on Docker Hub. The names and tags for each image can be found in its individual nextflow process. For example, the `run_fastp` process uses the eoksen/fastp:v0.23.3 image. You can find this image on [Docker Hub](https://hub.docker.com/u/eoksen).
+To ensure that the results of this pipeline can be reliably reproduced, we run all processes for this pipeline in Docker containers with versioned software. The image names, tags, Dockerfiles, and default registry/namespace are tracked centrally in `conf/images.json`. By default the pipeline resolves images from `docker.io/eoksen`, but you can override that at runtime with `--container_registry` and `--container_namespace`.
 
 However, if you wish to build these Docker images on your own system, you can do so using the Dockerfiles and scripts provided in the dockerfiles directory. To build all of these images, you can use the scripts/build_images.sh script. This script will:
 
-- Build both architecture versions for each package under the same tag with buildx.
-- For bowtie2, build a separately tagged version for each architecture.
+- Build a selected subset of tracked image targets or all of them.
+- Default to a local single-architecture build so it does not accidentally push to a personal registry.
+- Support explicit multi-architecture publish builds, local or registry-backed BuildKit cache, changed-context builds, and benchmark CSV output.
 
-You can run the `build_images.sh` script with the following command:
+You can run the `build_images.sh` script with the following commands:
 ```bash
 scripts/build_images.sh
+scripts/build_images.sh --targets qualimap,bowtie2 --jobs 1
+scripts/build_images.sh --push --namespace <dockerhub-user> --cache-mode registry --benchmark-file benchmarks/build_times.csv
 ```
 Before running the script, make sure it has execution permissions. You can give it execution permissions with the following command:
 ```bash
 chmod +x scripts/build_images.sh
 ```
+To see the tracked build targets, run:
+```bash
+scripts/build_images.sh --list-targets
+```
+
+The `conf/images.json` manifest is the source of truth for container resolution. Its schema is:
+
+- `defaults.registry` and `defaults.namespace`: default registry/namespace used by the pipeline and build script.
+- `defaults.publish_platforms` and `defaults.host_platform_map`: default platforms for publish builds and host-local builds.
+- `images.<key>.runtime_name` and `images.<key>.version`: the runtime image reference parts used by Nextflow.
+- `images.<key>.build.dockerfile`, `images.<key>.build.context`, and `images.<key>.build.args`: the Docker build inputs used by `scripts/build_images.sh`.
+
+The current required runtime image keys are `aria2`, `bcftools`, `biopython`, `bowtie2`, `fastp`, `pigz`, `qualimap`, `samtools`, `sra_parser`, and `sra_tools`.
+
+The canonical runtime images for this pipeline are:
+
+- `docker.io/eoksen/aria2-sra-download:1.37.0`
+- `docker.io/eoksen/bcftools:1.23.1`
+- `docker.io/eoksen/biopython-pysam:1.86-pysam0.23.3`
+- `docker.io/eoksen/bowtie2:2.5.5`
+- `docker.io/eoksen/fastp:1.3.0`
+- `docker.io/eoksen/pigz:2.8`
+- `docker.io/eoksen/qualimap:2.3`
+- `docker.io/eoksen/samtools:1.23.1`
+- `docker.io/eoksen/sra-parser:1.1.0`
+- `docker.io/eoksen/sra-tools:3.2.1`
+
+When you build with `--cache-mode registry`, BuildKit cache layers should be treated as implementation detail rather than runtime dependencies. By default they now publish as tags under the single cache repository `docker.io/<namespace>/sra-alignment-cache`, which keeps the public runtime namespace easier to scan while preserving remote cache reuse.
 
 ## Contributing Guidelines
 
@@ -247,7 +282,7 @@ This project is licensed under the terms of the GNU General Public License v3.0.
 
 ### **Third-Party Software**
 
-This project includes and depends on various third-party software components. Each of these components is licensed under its own terms, which can be found in the corresponding Dockerfile in the `root/dockerfiles/image_name` directory for each Docker image used in this project.
+This project includes and depends on various third-party software components. Each of these components is licensed under its own terms, which can be found in the corresponding Dockerfile in the `dockerfiles/multiarch/<image_name>` directory for each Docker image used in this project.
 
 By using this project, you acknowledge that you understand and will comply with all relevant licenses for these third-party components.
 
