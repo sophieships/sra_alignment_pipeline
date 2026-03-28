@@ -1,47 +1,29 @@
-# Using Debian as base image
-FROM debian:bullseye
+FROM ubuntu:24.04
 
-# Set environment variables
-ENV QUALIMAP_VERSION="2.2.1" \
-    R_VERSION="3.6.3"
+ARG QUALIMAP_VERSION=2.3
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    openjdk-11-jdk \
-    build-essential \
-    libcurl4-gnutls-dev \
-    libxml2-dev \
-    libssl-dev \
-    default-libmysqlclient-dev \
-    libcairo2-dev \
-    libxt-dev \
-    x11-common \
-    libx11-6 \
-    libx11-dev \
-    libpng-dev \
-    libreadline-dev \
-    gfortran \
-    unzip \
-    libbz2-dev \
-    liblzma-dev \
-    procps
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        fontconfig \
+        libcairo2 \
+        libjpeg-turbo8 \
+        libpng16-16 \
+        libxt6 \
+        openjdk-17-jre-headless \
+        procps \
+        r-base-core \
+        unzip \
+        x11-common && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install R
-RUN curl -O https://cran.r-project.org/src/base/R-3/R-${R_VERSION}.tar.gz && \
-    tar -xf R-${R_VERSION}.tar.gz && \
-    cd R-${R_VERSION} && \
-    ./configure --with-x=no && \
-    make && \
-    make install && \
-    cd .. && \
-    rm -rf R-${R_VERSION} R-${R_VERSION}.tar.gz
+RUN curl -fsSL -o qualimap.zip "https://bitbucket.org/kokonech/qualimap/downloads/qualimap_v${QUALIMAP_VERSION}.zip" && \
+    unzip qualimap.zip && \
+    rm qualimap.zip && \
+    mv "qualimap_v${QUALIMAP_VERSION}" /opt/qualimap && \
+    sed -i 's/ -XX:MaxPermSize=1024m//g' /opt/qualimap/qualimap /opt/qualimap/qualimap_bash_fix
 
-# Install qualimap
-RUN curl -LO https://bitbucket.org/kokonech/qualimap/downloads/qualimap_v${QUALIMAP_VERSION}.zip && \
-    unzip qualimap_v${QUALIMAP_VERSION}.zip && \
-    rm qualimap_v${QUALIMAP_VERSION}.zip && \
-    mv qualimap_v${QUALIMAP_VERSION} /opt/qualimap
-
-# Set PATH
 ENV PATH="/opt/qualimap:${PATH}"
+WORKDIR /data
