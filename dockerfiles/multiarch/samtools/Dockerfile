@@ -1,6 +1,7 @@
-FROM ubuntu:24.04
+FROM ubuntu:24.04 AS builder
 
 ARG SAMTOOLS_VERSION=1.23.1
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -25,5 +26,23 @@ RUN wget -q "https://github.com/samtools/samtools/releases/download/${SAMTOOLS_V
     make -j"$(nproc)" && \
     make install && \
     rm -rf /tmp/*
+
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        libbz2-1.0 \
+        libcurl4t64 \
+        libdeflate0 \
+        liblzma5 \
+        libncurses6 \
+        zlib1g && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/local/bin/samtools /usr/local/bin/samtools
+COPY LICENSE.txt /licenses/samtools/LICENSE.txt
 
 WORKDIR /data
