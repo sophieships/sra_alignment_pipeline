@@ -108,12 +108,35 @@ missing_config="${tmp_root}/missing.json"
 expect_failure_contains \
     "Manifest file not found" \
     python3 scripts/image_manifest.py list-targets --config "${missing_config}"
+expect_failure_contains \
+    "Image manifest not found" \
+    scripts/build_images.sh --config "${missing_config}" --list-targets
 
 bad_json="${tmp_root}/bad.json"
 printf '{bad json\n' > "${bad_json}"
 expect_failure_contains \
     "Manifest file is not valid JSON" \
     python3 scripts/image_manifest.py list-targets --config "${bad_json}"
+
+invalid_utf8_manifest="${tmp_root}/invalid-utf8.json"
+printf '\377\376\000\000' > "${invalid_utf8_manifest}"
+expect_failure_contains \
+    "Manifest file is not valid UTF-8" \
+    python3 scripts/image_manifest.py list-targets --config "${invalid_utf8_manifest}"
+expect_failure_contains \
+    "Failed to read 'default-registry' from image manifest" \
+    scripts/build_images.sh --config "${invalid_utf8_manifest}"
+
+permission_manifest="${tmp_root}/permission.json"
+printf '{"defaults":{"registry":"docker.io","namespace":"ns"}}\n' > "${permission_manifest}"
+chmod 000 "${permission_manifest}"
+expect_failure_contains \
+    "Failed to read manifest file" \
+    python3 scripts/image_manifest.py list-targets --config "${permission_manifest}"
+expect_failure_contains \
+    "Failed to read 'default-registry' from image manifest" \
+    scripts/build_images.sh --config "${permission_manifest}"
+chmod 600 "${permission_manifest}"
 
 non_object_manifest="${tmp_root}/non-object.json"
 printf '[1, 2, 3]\n' > "${non_object_manifest}"
@@ -144,6 +167,15 @@ JSON
 expect_output_equals \
     "enabled_one" \
     python3 scripts/image_manifest.py list-targets --config "${disabled_manifest}"
+
+list_targets_manifest="${tmp_root}/list-targets.json"
+cat > "${list_targets_manifest}" <<'JSON'
+{"images":{"foo":{"runtime_name":"foo","version":"1","build":{"enabled":true,"dockerfile":"dockerfiles/foo/Dockerfile","context":"dockerfiles/foo"}}}}
+JSON
+expect_output_equals \
+    "foo" \
+    scripts/build_images.sh --list-targets --config "${list_targets_manifest}"
+
 expect_failure_contains \
     "Disabled build target(s): disabled_one" \
     python3 scripts/image_manifest.py build-targets --config "${disabled_manifest}" --targets disabled_one

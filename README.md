@@ -242,7 +242,7 @@ python3 scripts/image_manifest.py build-targets --config conf/images.json --targ
 
 When you build with `--cache-mode registry`, BuildKit cache layers should be treated as implementation detail rather than runtime dependencies. By default they now publish as tags under the single cache repository `docker.io/<namespace>/sra-alignment-cache`, which keeps the public runtime namespace easier to scan while preserving remote cache reuse.
 
-The `--changed-since <ref>` option compares the current worktree against the supplied git ref and includes a target when its manifest entry, Dockerfile, or Docker build context has changed.
+The `--changed-since <ref>` option compares the current worktree against the supplied git ref and includes a target when its manifest entry, Dockerfile, or Docker build context has changed. The comparison also considers current uncommitted tracked changes and untracked files, so the result reflects the live worktree rather than only committed differences.
 
 ## Contributing Guidelines
 

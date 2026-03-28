@@ -43,7 +43,7 @@ Options:
   --targets <list>          Comma-separated subset of image targets
   --changed-since <ref>     Only build targets whose manifest entry, Dockerfile, or build context changed since the git ref
   --cache-mode <mode>       local, registry, or none (default: local)
-  --cache-ref <value>       Cache repository override for registry cache mode
+  --cache-ref <value>       Cache repository override for registry cache mode (default: <registry>/<namespace>/sra-alignment-cache:<target>-buildcache)
   --benchmark-file <path>   Write per-image timing data as CSV
   --list-targets            Print the available build targets and exit
   --help                    Show this message and exit
@@ -146,8 +146,13 @@ try:
         manifest = json.load(handle)
 except FileNotFoundError as exc:
     raise SystemExit(f"Manifest file not found: {config_path}") from exc
+except UnicodeDecodeError as exc:
+    raise SystemExit(f"Manifest file is not valid UTF-8: {config_path} ({exc})") from exc
 except JSONDecodeError as exc:
     raise SystemExit(f"Manifest file is not valid JSON: {config_path} ({exc.msg})") from exc
+except OSError as exc:
+    detail = exc.strerror or str(exc)
+    raise SystemExit(f"Failed to read manifest file: {config_path} ({detail})") from exc
 
 if not isinstance(manifest, dict):
     raise SystemExit(f"Manifest top-level JSON value must be an object: {config_path}")
@@ -198,6 +203,16 @@ query_manifest_value() {
 }
 
 ensure_builder() {
+    local docker_status
+    if ! docker_status="$(docker info 2>&1 >/dev/null)"; then
+        if [[ -n "${docker_status}" ]]; then
+            echo "Docker daemon is unreachable: ${docker_status}" >&2
+        else
+            echo "Docker daemon is unreachable." >&2
+        fi
+        return 1
+    fi
+
     if ! docker buildx inspect "${BUILDER_NAME}" >/dev/null 2>&1; then
         echo "Creating buildx builder '${BUILDER_NAME}'..."
         if ! docker buildx create --name "${BUILDER_NAME}" --driver docker-container >/dev/null; then
@@ -485,6 +500,11 @@ if [[ ! -f "${CONFIG_PATH}" ]]; then
     exit 1
 fi
 
+if [[ "${LIST_TARGETS}" == true ]]; then
+    python3 "${HELPER_SCRIPT}" list-targets --config "${CONFIG_PATH}"
+    exit 0
+fi
+
 if [[ ! "${JOBS}" =~ ^[0-9]+$ ]] || [[ "${JOBS}" -lt 1 ]]; then
     echo "--jobs must be a positive integer." >&2
     exit 1
@@ -501,11 +521,6 @@ esac
 
 REGISTRY="${REGISTRY:-$(query_manifest_value default-registry)}"
 NAMESPACE="${NAMESPACE:-$(query_manifest_value default-namespace)}"
-
-if [[ "${LIST_TARGETS}" == true ]]; then
-    python3 "${HELPER_SCRIPT}" list-targets --config "${CONFIG_PATH}"
-    exit 0
-fi
 
 if [[ -z "${PLATFORMS}" ]]; then
     if [[ "${PUSH}" == true ]]; then
