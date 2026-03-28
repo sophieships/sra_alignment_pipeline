@@ -26,7 +26,7 @@ SRA Alignment Pipeline
 **Important:** Before you can use this pipeline, you need to install Nextflow and Docker. 
 - Nextflow can be installed by following the instructions [here](https://www.nextflow.io/docs/latest/getstarted.html). 
 - Docker can be installed by following the instructions [here](https://docs.docker.com/get-docker/). 
-- This pipeline now resolves its runtime images from a tracked image manifest and has been modernized for current multi-architecture Docker builds. The local validation in this repository was performed with Nextflow 22.10.7 and Docker 29.x on arm64.
+- This pipeline now resolves its runtime images from a tracked image manifest and has been modernized for current multi-architecture Docker builds. Local validation in this repository was performed with Nextflow 22.10.7 and Docker 29.x on arm64, and CI currently exercises Nextflow 23.04.0 on Ubuntu.
 
 ## Input Data
 
@@ -201,9 +201,9 @@ nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email 
 
 ## Reproducibility and Docker Images
 
-To ensure that the results of this pipeline can be reliably reproduced, we run all processes for this pipeline in Docker containers with versioned software. The image names, tags, Dockerfiles, and default registry/namespace are tracked centrally in `conf/images.json`. By default the pipeline resolves images from `docker.io/eoksen`, but you can override that at runtime with `--container_registry` and `--container_namespace`.
+To ensure that the results of this pipeline can be reliably reproduced, we run all processes for this pipeline in Docker containers with versioned software. The image names, tags, Dockerfiles, and default registry/namespace are tracked centrally in `conf/images.json`. By default the pipeline resolves runtime images from `docker.io/eoksen`, but you can override that at runtime with `--container_registry` and `--container_namespace`.
 
-However, if you wish to build these Docker images on your own system, you can do so using the Dockerfiles and scripts provided in the dockerfiles directory. To build all of these images, you can use the scripts/build_images.sh script. This script will:
+If you want to build those images yourself, use the Dockerfiles and helper scripts in the `dockerfiles` and `scripts` directories. The `scripts/build_images.sh` script is for build-time workflows and uses the same manifest as build metadata. It will:
 
 - Build a selected subset of tracked image targets or all of them.
 - Default to a local single-architecture build so it does not accidentally push to a personal registry.
@@ -229,24 +229,20 @@ The `conf/images.json` manifest is the source of truth for container resolution.
 - `defaults.registry` and `defaults.namespace`: default registry/namespace used by the pipeline and build script.
 - `defaults.publish_platforms` and `defaults.host_platform_map`: default platforms for publish builds and host-local builds.
 - `images.<key>.runtime_name` and `images.<key>.version`: the runtime image reference parts used by Nextflow.
+- `images.<key>.build.enabled`: whether the image appears in `scripts/build_images.sh --list-targets` and can be selected for builds.
 - `images.<key>.build.dockerfile`, `images.<key>.build.context`, and `images.<key>.build.args`: the Docker build inputs used by `scripts/build_images.sh`.
 
 The current required runtime image keys are `aria2`, `bcftools`, `biopython`, `bowtie2`, `fastp`, `pigz`, `qualimap`, `samtools`, `sra_parser`, and `sra_tools`.
 
-The canonical runtime images for this pipeline are:
-
-- `docker.io/eoksen/aria2-sra-download:1.37.0`
-- `docker.io/eoksen/bcftools:1.23.1`
-- `docker.io/eoksen/biopython-pysam:1.86-pysam0.23.3`
-- `docker.io/eoksen/bowtie2:2.5.5`
-- `docker.io/eoksen/fastp:1.3.0`
-- `docker.io/eoksen/pigz:2.8`
-- `docker.io/eoksen/qualimap:2.3`
-- `docker.io/eoksen/samtools:1.23.1`
-- `docker.io/eoksen/sra-parser:1.1.0`
-- `docker.io/eoksen/sra-tools:3.2.1`
+To inspect the currently tracked runtime/build targets without duplicating the manifest contents in documentation, use:
+```bash
+python3 scripts/image_manifest.py list-targets --config conf/images.json
+python3 scripts/image_manifest.py build-targets --config conf/images.json --targets fastp
+```
 
 When you build with `--cache-mode registry`, BuildKit cache layers should be treated as implementation detail rather than runtime dependencies. By default they now publish as tags under the single cache repository `docker.io/<namespace>/sra-alignment-cache`, which keeps the public runtime namespace easier to scan while preserving remote cache reuse.
+
+The `--changed-since <ref>` option compares the current worktree against the supplied git ref and includes a target when its manifest entry, Dockerfile, or Docker build context has changed.
 
 ## Contributing Guidelines
 

@@ -24,13 +24,33 @@ jobs:
 
       - name: Verify manifest validation failures are readable
         run: |
+          assert_contains() {
+            local haystack="$1"
+            local needle="$2"
+            local label="$3"
+            if [[ "${haystack}" != *"${needle}"* ]]; then
+              echo "Expected ${label} output to contain: ${needle}" >&2
+              echo "Actual output:" >&2
+              echo "${haystack}" >&2
+              exit 1
+            fi
+          }
+
           bad_json="$(mktemp)"
           printf '{bad json\n' > "${bad_json}"
           if nextflow_output="$(nextflow run main.nf --help --image_manifest "${bad_json}" -ansi-log false 2>&1)"; then
             echo "Expected malformed manifest check to fail." >&2
             exit 1
           fi
-          [[ "${nextflow_output}" == *"Invalid container image manifest"* ]]
+          assert_contains "${nextflow_output}" "Invalid container image manifest" "malformed manifest"
+
+          non_object_manifest="$(mktemp)"
+          printf '[1, 2, 3]\n' > "${non_object_manifest}"
+          if nextflow_output="$(nextflow run main.nf --help --image_manifest "${non_object_manifest}" -ansi-log false 2>&1)"; then
+            echo "Expected top-level non-object manifest check to fail." >&2
+            exit 1
+          fi
+          assert_contains "${nextflow_output}" "top-level JSON value must be an object" "top-level non-object manifest"
 
           missing_defaults="$(mktemp)"
           cat > "${missing_defaults}" <<'JSON'
@@ -40,7 +60,17 @@ jobs:
             echo "Expected missing-defaults manifest check to fail." >&2
             exit 1
           fi
-          [[ "${nextflow_output}" == *"defaults must be an object"* ]]
+          assert_contains "${nextflow_output}" "defaults must be an object" "missing defaults manifest"
+
+          missing_required_image="$(mktemp)"
+          cat > "${missing_required_image}" <<'JSON'
+          {"defaults":{"registry":"docker.io","namespace":"eoksen"},"images":{"aria2":{"runtime_name":"aria2-sra-download","version":"1.37.0","build":{"enabled":true,"dockerfile":"dockerfiles/multiarch/aria2/Dockerfile","context":"dockerfiles/multiarch/aria2"}}}}
+          JSON
+          if nextflow_output="$(nextflow run main.nf --help --image_manifest "${missing_required_image}" -ansi-log false 2>&1)"; then
+            echo "Expected missing required image manifest check to fail." >&2
+            exit 1
+          fi
+          assert_contains "${nextflow_output}" "images.bcftools must be an object" "missing required image manifest"
 
       - name: Run image manifest regression checks
         run: scripts/test_image_manifest.sh

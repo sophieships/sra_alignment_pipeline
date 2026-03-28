@@ -22,6 +22,7 @@ BENCHMARK_FILE=""
 LIST_TARGETS=false
 LOCAL_CACHE_DIR="${REPO_ROOT}/.buildx-cache"
 BENCHMARK_ROW_DIR=""
+ATTEMPTED_TARGET_COUNT=0
 
 die() {
     echo "$*" >&2
@@ -40,7 +41,7 @@ Options:
   --push                    Push built images to the registry
   --jobs <int>              Max parallel builds (default: 2)
   --targets <list>          Comma-separated subset of image targets
-  --changed-since <ref>     Only build targets whose Docker context changed since the git ref
+  --changed-since <ref>     Only build targets whose manifest entry, Dockerfile, or build context changed since the git ref
   --cache-mode <mode>       local, registry, or none (default: local)
   --cache-ref <value>       Cache repository override for registry cache mode
   --benchmark-file <path>   Write per-image timing data as CSV
@@ -53,6 +54,15 @@ Examples:
   scripts/build_images.sh --push --namespace mydockerhub --cache-mode registry
   scripts/build_images.sh --changed-since origin/main --benchmark-file benchmarks/build_times.csv
 EOF
+}
+
+require_option_value() {
+    local option_name="$1"
+    local option_value="${2-}"
+
+    if [[ -z "${option_value}" ]]; then
+        die "Option '${option_name}' requires a value."
+    fi
 }
 
 csv_escape() {
@@ -113,6 +123,21 @@ import sys
 from json import JSONDecodeError
 from pathlib import Path
 
+
+def require_object(parent, key, path_label):
+    value = parent.get(key)
+    if not isinstance(value, dict):
+        raise SystemExit(f"Manifest field '{path_label}' must be an object: {config_path}")
+    return value
+
+
+def require_string(parent, key, path_label):
+    value = parent.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise SystemExit(f"Manifest field '{path_label}' must be a non-empty string: {config_path}")
+    return value.strip()
+
+
 config_path = Path(sys.argv[1]).expanduser().resolve()
 command = sys.argv[2]
 
@@ -124,15 +149,37 @@ except FileNotFoundError as exc:
 except JSONDecodeError as exc:
     raise SystemExit(f"Manifest file is not valid JSON: {config_path} ({exc.msg})") from exc
 
+if not isinstance(manifest, dict):
+    raise SystemExit(f"Manifest top-level JSON value must be an object: {config_path}")
+
+defaults = require_object(manifest, "defaults", "defaults")
+
 if command == "default-registry":
-    print(manifest["defaults"]["registry"])
+    print(require_string(defaults, "registry", "defaults.registry"))
 elif command == "default-namespace":
-    print(manifest["defaults"]["namespace"])
+    print(require_string(defaults, "namespace", "defaults.namespace"))
 elif command == "default-publish-platforms":
-    print(",".join(manifest["defaults"]["publish_platforms"]))
+    publish_platforms = defaults.get("publish_platforms")
+    if not isinstance(publish_platforms, list) or not publish_platforms:
+        raise SystemExit(f"Manifest field 'defaults.publish_platforms' must be a non-empty array: {config_path}")
+
+    normalized_platforms = []
+    for index, platform in enumerate(publish_platforms):
+        if not isinstance(platform, str) or not platform.strip():
+            raise SystemExit(
+                f"Manifest field 'defaults.publish_platforms[{index}]' must be a non-empty string: {config_path}"
+            )
+        normalized_platforms.append(platform.strip())
+
+    print(",".join(normalized_platforms))
 elif command == "host-platform":
     host_arch = sys.argv[3]
-    print(manifest["defaults"]["host_platform_map"].get(host_arch, ""))
+    host_platform_map = require_object(defaults, "host_platform_map", "defaults.host_platform_map")
+    resolved_platform = host_platform_map.get(host_arch)
+    if not isinstance(resolved_platform, str) or not resolved_platform.strip():
+        valid_arches = ", ".join(sorted(host_platform_map))
+        raise SystemExit(f"Unsupported host architecture '{host_arch}'. Valid architectures: {valid_arches}")
+    print(resolved_platform.strip())
 else:
     raise SystemExit(f"Unknown manifest query: {command}")
 PY
@@ -143,8 +190,8 @@ query_manifest_value() {
     shift
 
     local manifest_value
-    if ! manifest_value="$(query_manifest "${query_name}" "$@")"; then
-        die "Failed to read '${query_name}' from image manifest: ${CONFIG_PATH}"
+    if ! manifest_value="$(query_manifest "${query_name}" "$@" 2>&1)"; then
+        die "Failed to read '${query_name}' from image manifest '${CONFIG_PATH}': ${manifest_value}"
     fi
 
     printf '%s\n' "${manifest_value}"
@@ -171,8 +218,10 @@ ensure_builder() {
 
 wait_for_oldest_job() {
     local oldest_pid="$1"
+    local target_name="$2"
     if ! wait "${oldest_pid}"; then
         BUILD_FAILED=1
+        echo "Background build failed for target '${target_name}'." >&2
     fi
 }
 
@@ -211,8 +260,6 @@ write_benchmark_row() {
 }
 
 build_target() {
-    set +e
-
     local name="$1"
     local runtime_name="$2"
     local version="$3"
@@ -222,22 +269,29 @@ build_target() {
     local build_args_json="$7"
     local benchmark_row_file="$8"
 
-    local image_ref
-    image_ref="$(build_repository "${runtime_name}"):${version}"
-
     local output_mode="load"
     if [[ "${PUSH}" == true ]]; then
         output_mode="push"
     fi
 
-    local start_epoch
-    start_epoch="$(date +%s)"
-    if [[ -z "${start_epoch}" ]]; then
-        start_epoch=0
-    fi
     local end_epoch
     local status="success"
     local failure_reason=""
+    local image_ref=""
+    local start_epoch
+    if ! start_epoch="$(date +%s)"; then
+        start_epoch=0
+        status="failed"
+        failure_reason="Failed to record build start time."
+    fi
+
+    local image_repository
+    if ! image_repository="$(build_repository "${runtime_name}")"; then
+        status="failed"
+        failure_reason="Failed to resolve image repository for target '${name}'."
+    else
+        image_ref="${image_repository}:${version}"
+    fi
 
     # Keep per-target build state local so failed setup still yields a benchmark row.
     local -a build_cmd
@@ -267,8 +321,10 @@ build_target() {
             ;;
         registry)
             local cache_ref
-            cache_ref="$(build_cache_ref "${name}")"
-            if [[ -z "${cache_ref}" ]]; then
+            if ! cache_ref="$(build_cache_ref "${name}")"; then
+                status="failed"
+                failure_reason="Failed to resolve registry cache reference for target '${name}'."
+            elif [[ -z "${cache_ref}" ]]; then
                 status="failed"
                 failure_reason="Failed to resolve registry cache reference."
             else
@@ -290,17 +346,25 @@ build_target() {
     local -a build_arg_flags=()
     if [[ "${status}" == "success" ]]; then
         local build_arg_lines
-        if ! build_arg_lines="$(python3 - "${build_args_json}" <<'PY'
+        if ! build_arg_lines="$(python3 - "${build_args_json}" 2>&1 <<'PY'
 import json
 import sys
 
 build_args = json.loads(sys.argv[1])
+if not isinstance(build_args, dict):
+    raise SystemExit("build args JSON must decode to an object")
+
 for key, value in build_args.items():
-    print(f"{key}={value}")
+    if not isinstance(key, str) or not key:
+        raise SystemExit("build arg names must be non-empty strings")
+    value_str = str(value)
+    if "\n" in key or "\n" in value_str:
+        raise SystemExit(f"Build arg '{key}' contains a newline, which is not supported.")
+    print(f"{key}={value_str}")
 PY
         )"; then
             status="failed"
-            failure_reason="Failed to parse build args for target '${name}'."
+            failure_reason="Failed to parse build args for target '${name}': ${build_arg_lines}"
         else
             while IFS='=' read -r arg_name arg_value; do
                 [[ -z "${arg_name}" ]] && continue
@@ -327,9 +391,12 @@ PY
             failure_reason="docker buildx build failed for ${image_ref}."
         fi
     fi
-    end_epoch="$(date +%s)"
-    if [[ -z "${end_epoch}" ]]; then
+    if ! end_epoch="$(date +%s)"; then
         end_epoch="${start_epoch}"
+        if [[ "${status}" == "success" ]]; then
+            status="failed"
+            failure_reason="Failed to record build end time."
+        fi
     fi
     write_benchmark_row "${benchmark_row_file}" "${name}" "${image_ref}" "${platforms}" "${output_mode}" "${status}" "${start_epoch}" "${end_epoch}"
 
@@ -344,18 +411,22 @@ PY
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --config)
+            require_option_value "$1" "${2-}"
             CONFIG_PATH="$2"
             shift 2
             ;;
         --registry)
+            require_option_value "$1" "${2-}"
             REGISTRY="$2"
             shift 2
             ;;
         --namespace)
+            require_option_value "$1" "${2-}"
             NAMESPACE="$2"
             shift 2
             ;;
         --platforms)
+            require_option_value "$1" "${2-}"
             PLATFORMS="$2"
             shift 2
             ;;
@@ -364,26 +435,32 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --jobs)
+            require_option_value "$1" "${2-}"
             JOBS="$2"
             shift 2
             ;;
         --targets)
+            require_option_value "$1" "${2-}"
             TARGETS="$2"
             shift 2
             ;;
         --changed-since)
+            require_option_value "$1" "${2-}"
             CHANGED_SINCE="$2"
             shift 2
             ;;
         --cache-mode)
+            require_option_value "$1" "${2-}"
             CACHE_MODE="$2"
             shift 2
             ;;
         --cache-ref)
+            require_option_value "$1" "${2-}"
             CACHE_REF="$2"
             shift 2
             ;;
         --benchmark-file)
+            require_option_value "$1" "${2-}"
             BENCHMARK_FILE="$2"
             shift 2
             ;;
@@ -458,8 +535,9 @@ if ! TARGET_JSON="$(
         --config "${CONFIG_PATH}" \
         --targets "${TARGETS}" \
         --changed-since "${CHANGED_SINCE}"
+    2>&1
 )"; then
-    die "Failed to resolve build targets from image manifest: ${CONFIG_PATH}"
+    die "Failed to resolve build targets from image manifest '${CONFIG_PATH}': ${TARGET_JSON}"
 fi
 
 if ! TARGET_COUNT="$(
@@ -490,6 +568,8 @@ trap cleanup_benchmark_rows EXIT
 TOTAL_START="$(date +%s)"
 BUILD_FAILED=0
 ACTIVE_PIDS=()
+ACTIVE_TARGET_NAMES=()
+# Expand the resolved target JSON once so helper failures cannot disappear inside a read loop.
 if ! TARGET_ROWS="$(
     python3 - "${TARGET_JSON}" <<'PY'
 import json
@@ -514,7 +594,6 @@ PY
     die "Failed to prepare build target rows."
 fi
 
-# Expand the resolved target JSON once so helper failures cannot disappear inside a read loop.
 while IFS=$'\t' read -r name runtime_name version dockerfile context build_args_json; do
     [[ -z "${name}" ]] && continue
 
@@ -528,11 +607,15 @@ while IFS=$'\t' read -r name runtime_name version dockerfile context build_args_
     fi
 
     build_target "${name}" "${runtime_name}" "${version}" "${dockerfile}" "${context}" "${PLATFORMS}" "${build_args_json}" "${benchmark_row_file}" &
-    ACTIVE_PIDS+=("$!")
+    target_pid="$!"
+    ACTIVE_PIDS+=("${target_pid}")
+    ACTIVE_TARGET_NAMES+=("${name}")
+    ((ATTEMPTED_TARGET_COUNT += 1))
 
     while (( ${#ACTIVE_PIDS[@]} >= JOBS )); do
-        wait_for_oldest_job "${ACTIVE_PIDS[0]}"
+        wait_for_oldest_job "${ACTIVE_PIDS[0]}" "${ACTIVE_TARGET_NAMES[0]}"
         ACTIVE_PIDS=("${ACTIVE_PIDS[@]:1}")
+        ACTIVE_TARGET_NAMES=("${ACTIVE_TARGET_NAMES[@]:1}")
         if (( BUILD_FAILED )); then
             break
         fi
@@ -540,8 +623,9 @@ while IFS=$'\t' read -r name runtime_name version dockerfile context build_args_
 done <<< "${TARGET_ROWS}"
 
 while (( ${#ACTIVE_PIDS[@]} > 0 )); do
-    wait_for_oldest_job "${ACTIVE_PIDS[0]}"
+    wait_for_oldest_job "${ACTIVE_PIDS[0]}" "${ACTIVE_TARGET_NAMES[0]}"
     ACTIVE_PIDS=("${ACTIVE_PIDS[@]:1}")
+    ACTIVE_TARGET_NAMES=("${ACTIVE_TARGET_NAMES[@]:1}")
 done
 
 TOTAL_END="$(date +%s)"
@@ -579,7 +663,7 @@ if [[ -n "${BENCHMARK_FILE}" ]]; then
     echo "Benchmark results written to ${BENCHMARK_FILE}"
 fi
 
-echo "Built ${TARGET_COUNT} target(s) in $((TOTAL_END - TOTAL_START))s."
+echo "Attempted ${ATTEMPTED_TARGET_COUNT} of ${TARGET_COUNT} resolved target(s) in $((TOTAL_END - TOTAL_START))s."
 
 if (( BUILD_FAILED )); then
     echo "One or more image builds failed." >&2

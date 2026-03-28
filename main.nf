@@ -1,3 +1,4 @@
+import groovy.json.JsonException
 import groovy.json.JsonSlurper
 
 def resolveManifestFile(String manifestPath) {
@@ -24,7 +25,7 @@ def loadImageManifest(String manifestPath) {
         }
         return (Map) parsedManifest
     }
-    catch (Exception exception) {
+    catch (JsonException exception) {
         manifestError(manifestFile, "could not parse JSON (${exception.message})")
     }
 }
