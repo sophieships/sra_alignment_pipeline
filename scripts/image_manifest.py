@@ -285,7 +285,7 @@ def main() -> int:
     build_targets_parser.add_argument(
         "--changed-since",
         default="",
-        help="Only include targets whose manifest entry, Dockerfile, or build context changed since the provided git ref.",
+        help="Only include targets whose Dockerfile or build context changed since the provided git ref, or all selected targets if the manifest file changed.",
     )
 
     list_parser = subparsers.add_parser("list-targets", help="Print buildable target names.")

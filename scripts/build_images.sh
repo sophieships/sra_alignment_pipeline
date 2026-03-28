@@ -41,7 +41,7 @@ Options:
   --push                    Push built images to the registry
   --jobs <int>              Max parallel builds (default: 2)
   --targets <list>          Comma-separated subset of image targets
-  --changed-since <ref>     Only build targets whose manifest entry, Dockerfile, or build context changed since the git ref
+  --changed-since <ref>     Only build targets whose Dockerfile or build context changed since the git ref, or all selected targets if the manifest file changed
   --cache-mode <mode>       local, registry, or none (default: local)
   --cache-ref <value>       Cache repository override for registry cache mode (default: <registry>/<namespace>/sra-alignment-cache:<target>-buildcache)
   --benchmark-file <path>   Write per-image timing data as CSV
