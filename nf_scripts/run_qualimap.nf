@@ -1,6 +1,6 @@
 process run_qualimap {
     cpus params.cpus
-    container 'eoksen/qualimab:v2.2.1'
+    container "${params.container_images.qualimap}"
 
     publishDir "results/${sorted_bam.simpleName}/qualimap", mode: 'copy'
 

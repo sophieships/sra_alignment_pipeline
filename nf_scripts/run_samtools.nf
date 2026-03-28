@@ -1,6 +1,6 @@
 process run_samtools {
     cpus params.cpus
-    container 'eoksen/samtools:1.17'
+    container "${params.container_images.samtools}"
 
     publishDir "results/${name}/samtools", mode: 'copy'
 

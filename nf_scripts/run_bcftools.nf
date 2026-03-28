@@ -1,6 +1,6 @@
 process run_bcftools {
     cpus params.cpus
-    container 'eoksen/bcftools:1.17'
+    container "${params.container_images.bcftools}"
 
     publishDir "results/${sorted_bam.simpleName}/bcftools", mode: 'copy'
 
