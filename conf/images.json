@@ -21,10 +21,6 @@
         "enabled": true,
         "dockerfile": "dockerfiles/multiarch/aria2/Dockerfile",
         "context": "dockerfiles/multiarch/aria2",
-        "platforms": [
-          "linux/amd64",
-          "linux/arm64"
-        ],
         "args": {
           "ARIA2_VERSION": "1.37.0"
         }
@@ -37,10 +33,6 @@
         "enabled": true,
         "dockerfile": "dockerfiles/multiarch/bcftools/Dockerfile",
         "context": "dockerfiles/multiarch/bcftools",
-        "platforms": [
-          "linux/amd64",
-          "linux/arm64"
-        ],
         "args": {
           "BCFTOOLS_VERSION": "1.23.1"
         }
@@ -53,10 +45,6 @@
         "enabled": true,
         "dockerfile": "dockerfiles/multiarch/biopython/Dockerfile",
         "context": "dockerfiles/multiarch/biopython",
-        "platforms": [
-          "linux/amd64",
-          "linux/arm64"
-        ],
         "args": {
           "PYTHON_IMAGE": "python:3.13-slim-bookworm",
           "BIOPYTHON_VERSION": "1.86",
@@ -71,10 +59,6 @@
         "enabled": true,
         "dockerfile": "dockerfiles/multiarch/bowtie2/Dockerfile",
         "context": "dockerfiles/multiarch/bowtie2",
-        "platforms": [
-          "linux/amd64",
-          "linux/arm64"
-        ],
         "args": {
           "BOWTIE2_VERSION": "2.5.5"
         }
@@ -87,10 +71,6 @@
         "enabled": true,
         "dockerfile": "dockerfiles/multiarch/fastp/Dockerfile",
         "context": "dockerfiles/multiarch/fastp",
-        "platforms": [
-          "linux/amd64",
-          "linux/arm64"
-        ],
         "args": {
           "FASTP_VERSION": "v1.3.0",
           "LIBISAL_VERSION": "v2.31.1",
@@ -105,10 +85,6 @@
         "enabled": true,
         "dockerfile": "dockerfiles/multiarch/pigz/Dockerfile",
         "context": "dockerfiles/multiarch/pigz",
-        "platforms": [
-          "linux/amd64",
-          "linux/arm64"
-        ],
         "args": {
           "PIGZ_VERSION": "2.8-1"
         }
@@ -121,10 +97,6 @@
         "enabled": true,
         "dockerfile": "dockerfiles/multiarch/qualimap/Dockerfile",
         "context": "dockerfiles/multiarch/qualimap",
-        "platforms": [
-          "linux/amd64",
-          "linux/arm64"
-        ],
         "args": {
           "QUALIMAP_VERSION": "2.3"
         }
@@ -137,10 +109,6 @@
         "enabled": true,
         "dockerfile": "dockerfiles/multiarch/samtools/Dockerfile",
         "context": "dockerfiles/multiarch/samtools",
-        "platforms": [
-          "linux/amd64",
-          "linux/arm64"
-        ],
         "args": {
           "SAMTOOLS_VERSION": "1.23.1"
         }
@@ -153,10 +121,6 @@
         "enabled": true,
         "dockerfile": "dockerfiles/multiarch/sra-parser/Dockerfile",
         "context": "dockerfiles/multiarch/sra-parser",
-        "platforms": [
-          "linux/amd64",
-          "linux/arm64"
-        ],
         "args": {
           "PYTHON_IMAGE": "python:3.13-slim-bookworm",
           "REQUESTS_VERSION": "2.32.3",
@@ -173,10 +137,6 @@
         "enabled": true,
         "dockerfile": "dockerfiles/multiarch/sra-tools/Dockerfile",
         "context": "dockerfiles/multiarch/sra-tools",
-        "platforms": [
-          "linux/amd64",
-          "linux/arm64"
-        ],
         "args": {
           "SRA_TOOLS_VERSION": "3.2.1"
         }
