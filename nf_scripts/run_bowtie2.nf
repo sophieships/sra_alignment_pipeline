@@ -1,6 +1,6 @@
 process run_bowtie2 {
     cpus params.cpus
-    container "${params.container_images.bowtie2}"
+    container "${params.container_image}"
 
     input:
     tuple val(name), path(forward_reads), path(reverse_reads)

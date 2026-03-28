@@ -1,6 +1,6 @@
 process download_fasta {
     maxForks 1
-    container "${params.container_images.biopython}"
+    container "${params.container_image}"
 
     storeDir "results/reference_genomes"
 

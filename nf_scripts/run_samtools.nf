@@ -1,6 +1,6 @@
 process run_samtools {
     cpus params.cpus
-    container "${params.container_images.samtools}"
+    container "${params.container_image}"
 
     publishDir "results/${name}/samtools", mode: 'copy'
 

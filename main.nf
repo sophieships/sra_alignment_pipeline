@@ -1,6 +1,19 @@
 import groovy.json.JsonException
 import groovy.json.JsonSlurper
 
+final List REQUIRED_RUNTIME_IMAGE_KEYS = [
+    'aria2',
+    'bcftools',
+    'biopython',
+    'bowtie2',
+    'fastp',
+    'pigz',
+    'qualimap',
+    'samtools',
+    'sra_parser',
+    'sra_tools',
+]
+
 def resolveManifestFile(String manifestPath) {
     File manifestFile = new File(manifestPath)
     if (!manifestFile.isAbsolute()) {
@@ -51,25 +64,12 @@ def requireManifestString(Map parent, String key, File manifestFile, String path
     return value
 }
 
-def validateImageManifest(Map imageManifest, File manifestFile) {
+def validateImageManifest(Map imageManifest, File manifestFile, List requiredImageKeys) {
     Map defaults = requireManifestMap(imageManifest, 'defaults', manifestFile, 'defaults')
     requireManifestString(defaults, 'registry', manifestFile, 'defaults.registry')
     requireManifestString(defaults, 'namespace', manifestFile, 'defaults.namespace')
 
     Map images = requireManifestMap(imageManifest, 'images', manifestFile, 'images')
-    List requiredImageKeys = [
-        'aria2',
-        'bcftools',
-        'biopython',
-        'bowtie2',
-        'fastp',
-        'pigz',
-        'qualimap',
-        'samtools',
-        'sra_parser',
-        'sra_tools',
-    ]
-
     requiredImageKeys.each { String imageKey ->
         Map imageDefinition = requireManifestMap(images, imageKey, manifestFile, "images.${imageKey}")
         requireManifestString(imageDefinition, 'runtime_name', manifestFile, "images.${imageKey}.runtime_name")
@@ -88,20 +88,25 @@ def buildImageReference(Map imageDefinition, String registry, String namespace) 
     return "${repository}:${resolvedVersion}"
 }
 
-def buildContainerImageMap(Map imageManifest, String registry, String namespace) {
-    imageManifest.images.collectEntries { String imageKey, Map imageDefinition ->
+def buildContainerImageMap(Map imageManifest, List requiredImageKeys, String registry, String namespace) {
+    Map images = (Map) imageManifest.images
+    requiredImageKeys.collectEntries { String imageKey ->
+        Map imageDefinition = (Map) images[imageKey]
         [(imageKey): buildImageReference(imageDefinition, registry, namespace)]
     }
 }
 
 def imageManifestFile = resolveManifestFile(params.image_manifest.toString())
 def imageManifest = loadImageManifest(params.image_manifest.toString())
-validateImageManifest(imageManifest, imageManifestFile)
+validateImageManifest(imageManifest, imageManifestFile, REQUIRED_RUNTIME_IMAGE_KEYS)
 def resolvedContainerRegistry = normalizeParamValue(params.container_registry, imageManifest.defaults.registry.toString())
 def resolvedContainerNamespace = normalizeParamValue(params.container_namespace, imageManifest.defaults.namespace.toString())
-params.container_registry = resolvedContainerRegistry
-params.container_namespace = resolvedContainerNamespace
-params.container_images = buildContainerImageMap(imageManifest, resolvedContainerRegistry, resolvedContainerNamespace)
+def resolvedContainerImages = buildContainerImageMap(
+    imageManifest,
+    REQUIRED_RUNTIME_IMAGE_KEYS,
+    resolvedContainerRegistry,
+    resolvedContainerNamespace
+)
 
 if (params.help) {
     log.info """
@@ -162,18 +167,18 @@ if ( !params.cpus.toString().isNumber() ) {
 }
 log.info("Using container images from ${resolvedContainerRegistry}/${resolvedContainerNamespace}")
 
-include { get_srrs } from './nf_scripts/get_srrs'
-include { parse_srrs } from './nf_scripts/parse_srrs'
-include { download_fastq } from './nf_scripts/download_fastq'
-include { run_fasterq_dump } from './nf_scripts/run_fasterq_dump'
-include { run_pigz } from './nf_scripts/run_pigz'
-include { run_fastp } from './nf_scripts/run_fastp'
-include { download_fasta } from './nf_scripts/download_fasta'
-include { run_bowtie2 } from './nf_scripts/run_bowtie2'
-include { run_samtools } from './nf_scripts/run_samtools'
-include { run_bcftools } from './nf_scripts/run_bcftools'
-include { run_qualimap } from './nf_scripts/run_qualimap'
-include { run_bcftools_filter } from './nf_scripts/run_bcftools_filter'
+include { get_srrs } from './nf_scripts/get_srrs' addParams(container_image: resolvedContainerImages['sra_parser'])
+include { parse_srrs } from './nf_scripts/parse_srrs' addParams(container_image: resolvedContainerImages['sra_parser'])
+include { download_fastq } from './nf_scripts/download_fastq' addParams(container_image: resolvedContainerImages['aria2'])
+include { run_fasterq_dump } from './nf_scripts/run_fasterq_dump' addParams(container_image: resolvedContainerImages['sra_tools'])
+include { run_pigz } from './nf_scripts/run_pigz' addParams(container_image: resolvedContainerImages['pigz'])
+include { run_fastp } from './nf_scripts/run_fastp' addParams(container_image: resolvedContainerImages['fastp'])
+include { download_fasta } from './nf_scripts/download_fasta' addParams(container_image: resolvedContainerImages['biopython'])
+include { run_bowtie2 } from './nf_scripts/run_bowtie2' addParams(container_image: resolvedContainerImages['bowtie2'])
+include { run_samtools } from './nf_scripts/run_samtools' addParams(container_image: resolvedContainerImages['samtools'])
+include { run_bcftools } from './nf_scripts/run_bcftools' addParams(container_image: resolvedContainerImages['bcftools'])
+include { run_qualimap } from './nf_scripts/run_qualimap' addParams(container_image: resolvedContainerImages['qualimap'])
+include { run_bcftools_filter } from './nf_scripts/run_bcftools_filter' addParams(container_image: resolvedContainerImages['bcftools'])
 
 workflow {
     if ( params.sra_accession && params.identifier && params.input_file == '' ) {

@@ -1,6 +1,6 @@
 process run_fastp {
     cpus params.cpus
-    container "${params.container_images.fastp}"
+    container "${params.container_image}"
 
     publishDir "results/${name}/fastp", mode: 'copy'
 

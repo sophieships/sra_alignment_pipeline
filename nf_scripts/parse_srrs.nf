@@ -1,5 +1,5 @@
 process parse_srrs {
-    container "${params.container_images.sra_parser}"
+    container "${params.container_image}"
 
     publishDir "results/${input_file}/srr_lists", mode: 'copy'
 

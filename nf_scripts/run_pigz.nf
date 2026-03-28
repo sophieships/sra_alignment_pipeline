@@ -1,6 +1,6 @@
 process run_pigz {
     cpus params.cpus
-    container "${params.container_images.pigz}"
+    container "${params.container_image}"
 
     publishDir "results/${sra_accession}/fastq", mode: 'copy'
 

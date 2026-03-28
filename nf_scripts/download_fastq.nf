@@ -1,6 +1,6 @@
 process download_fastq {
     maxForks 1
-    container "${params.container_images.aria2}"
+    container "${params.container_image}"
     errorStrategy 'ignore'
 
     publishDir "results/${sra_accession}/fastq", mode: 'copy'

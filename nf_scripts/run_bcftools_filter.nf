@@ -1,7 +1,7 @@
 process run_bcftools_filter {
     cpus params.cpus
 
-    container "${params.container_images.bcftools}"
+    container "${params.container_image}"
 
     publishDir "results/${vcf_file.simpleName}/filtered_vcfs", mode: 'copy'
 

@@ -1,6 +1,6 @@
 process run_bcftools {
     cpus params.cpus
-    container "${params.container_images.bcftools}"
+    container "${params.container_image}"
 
     publishDir "results/${sorted_bam.simpleName}/bcftools", mode: 'copy'
 

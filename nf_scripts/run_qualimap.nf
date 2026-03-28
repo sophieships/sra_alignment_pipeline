@@ -1,6 +1,6 @@
 process run_qualimap {
     cpus params.cpus
-    container "${params.container_images.qualimap}"
+    container "${params.container_image}"
 
     publishDir "results/${sorted_bam.simpleName}/qualimap", mode: 'copy'
 

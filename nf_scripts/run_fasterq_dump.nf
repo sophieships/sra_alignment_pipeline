@@ -1,6 +1,6 @@
 process run_fasterq_dump {
     cpus params.cpus
-    container "${params.container_images.sra_tools}"
+    container "${params.container_image}"
 
     shell '/bin/sh'
 
