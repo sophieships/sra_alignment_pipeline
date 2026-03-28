@@ -20,4 +20,27 @@ jobs:
           version: '23.04.0'
 
       - name: Verify pipeline parses and --help works
-        run: nextflow run main.nf --help
+        run: nextflow run main.nf --help -ansi-log false
+
+      - name: Verify manifest validation failures are readable
+        run: |
+          bad_json="$(mktemp)"
+          printf '{bad json\n' > "${bad_json}"
+          if nextflow_output="$(nextflow run main.nf --help --image_manifest "${bad_json}" -ansi-log false 2>&1)"; then
+            echo "Expected malformed manifest check to fail." >&2
+            exit 1
+          fi
+          [[ "${nextflow_output}" == *"Invalid container image manifest"* ]]
+
+          missing_defaults="$(mktemp)"
+          cat > "${missing_defaults}" <<'JSON'
+          {"images":{"aria2":{"runtime_name":"aria2-sra-download","version":"1.37.0","build":{"enabled":true,"dockerfile":"dockerfiles/multiarch/aria2/Dockerfile","context":"dockerfiles/multiarch/aria2"}}}}
+          JSON
+          if nextflow_output="$(nextflow run main.nf --help --image_manifest "${missing_defaults}" -ansi-log false 2>&1)"; then
+            echo "Expected missing-defaults manifest check to fail." >&2
+            exit 1
+          fi
+          [[ "${nextflow_output}" == *"defaults must be an object"* ]]
+
+      - name: Run image manifest regression checks
+        run: scripts/test_image_manifest.sh
