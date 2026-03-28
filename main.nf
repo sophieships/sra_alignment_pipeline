@@ -1,3 +1,107 @@
+import groovy.json.JsonSlurper
+
+def resolveManifestFile(String manifestPath) {
+    File manifestFile = new File(manifestPath)
+    if (!manifestFile.isAbsolute()) {
+        manifestFile = new File(baseDir.toString(), manifestPath)
+    }
+    return manifestFile
+}
+
+def manifestError(File manifestFile, String message) {
+    error("Invalid container image manifest at ${manifestFile}: ${message}")
+}
+
+def loadImageManifest(String manifestPath) {
+    File manifestFile = resolveManifestFile(manifestPath)
+    if (!manifestFile.exists()) {
+        error("Container image manifest not found: ${manifestFile}")
+    }
+    try {
+        def parsedManifest = new JsonSlurper().parse(manifestFile)
+        if (!(parsedManifest instanceof Map)) {
+            manifestError(manifestFile, "top-level JSON value must be an object")
+        }
+        return (Map) parsedManifest
+    }
+    catch (Exception exception) {
+        manifestError(manifestFile, "could not parse JSON (${exception.message})")
+    }
+}
+
+def normalizeParamValue(def value, String fallback) {
+    String normalizedValue = value?.toString()?.trim()
+    return normalizedValue ? normalizedValue : fallback
+}
+
+def requireManifestMap(Map parent, String key, File manifestFile, String pathLabel) {
+    def value = parent?.get(key)
+    if (!(value instanceof Map)) {
+        manifestError(manifestFile, "${pathLabel} must be an object")
+    }
+    return (Map) value
+}
+
+def requireManifestString(Map parent, String key, File manifestFile, String pathLabel) {
+    String value = parent?.get(key)?.toString()?.trim()
+    if (!value) {
+        manifestError(manifestFile, "${pathLabel} must be a non-empty string")
+    }
+    return value
+}
+
+def validateImageManifest(Map imageManifest, File manifestFile) {
+    Map defaults = requireManifestMap(imageManifest, 'defaults', manifestFile, 'defaults')
+    requireManifestString(defaults, 'registry', manifestFile, 'defaults.registry')
+    requireManifestString(defaults, 'namespace', manifestFile, 'defaults.namespace')
+
+    Map images = requireManifestMap(imageManifest, 'images', manifestFile, 'images')
+    List requiredImageKeys = [
+        'aria2',
+        'bcftools',
+        'biopython',
+        'bowtie2',
+        'fastp',
+        'pigz',
+        'qualimap',
+        'samtools',
+        'sra_parser',
+        'sra_tools',
+    ]
+
+    requiredImageKeys.each { String imageKey ->
+        Map imageDefinition = requireManifestMap(images, imageKey, manifestFile, "images.${imageKey}")
+        requireManifestString(imageDefinition, 'runtime_name', manifestFile, "images.${imageKey}.runtime_name")
+        requireManifestString(imageDefinition, 'version', manifestFile, "images.${imageKey}.version")
+    }
+}
+
+def buildImageReference(Map imageDefinition, String registry, String namespace) {
+    String resolvedRegistry = normalizeParamValue(imageDefinition.get('registry'), registry)
+    String resolvedNamespace = normalizeParamValue(imageDefinition.get('namespace'), namespace)
+    String resolvedImageName = imageDefinition.runtime_name.toString()
+    String resolvedVersion = imageDefinition.version.toString()
+    String repository = [resolvedRegistry, resolvedNamespace, resolvedImageName]
+        .findAll { it?.trim() }
+        .join('/')
+    return "${repository}:${resolvedVersion}"
+}
+
+def buildContainerImageMap(Map imageManifest, String registry, String namespace) {
+    imageManifest.images.collectEntries { String imageKey, Map imageDefinition ->
+        [(imageKey): buildImageReference(imageDefinition, registry, namespace)]
+    }
+}
+
+def imageManifestFile = resolveManifestFile(params.image_manifest.toString())
+def imageManifest = loadImageManifest(params.image_manifest.toString())
+validateImageManifest(imageManifest, imageManifestFile)
+def resolvedContainerRegistry = normalizeParamValue(params.container_registry, imageManifest.defaults.registry.toString())
+def resolvedContainerNamespace = normalizeParamValue(params.container_namespace, imageManifest.defaults.namespace.toString())
+params.container_registry = resolvedContainerRegistry
+params.container_namespace = resolvedContainerNamespace
+params.container_images = buildContainerImageMap(imageManifest, resolvedContainerRegistry, resolvedContainerNamespace)
+
 if (params.help) {
     log.info """
     ======================
@@ -18,7 +122,9 @@ if (params.help) {
       --input_file <path>       CSV with columns: sra_accession, identifier
 
     Optional:
-      --architecture <arch>     arm64 or x86_64 (auto-detected if omitted)
+      --image_manifest <path>   Path to the tracked container image manifest
+      --container_registry <r>  Override the container registry from the manifest
+      --container_namespace <n> Override the container namespace from the manifest
       --L <int>                 Bowtie2 seed length (default: 22)
       --X <int>                 Bowtie2 max insert size (default: 600)
       --ploidy <int>            Ploidy for variant calling (default: 1)
@@ -36,7 +142,7 @@ if ( params.sra_accession == '' && params.identifier == '' && params.input_file 
 
 // If only one of the SRA accession or identifier is provided without an input file, throw an error.
 if (( params.sra_accession == '' || params.identifier == '' ) && params.input_file == '' ) {
-    error("You have only provided one of the SRA accession or identifier. Both or an input file must be provided. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64> \nOr provide an input file: nextflow run main.nf --input_file <file> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
+    error("You have only provided one of the SRA accession or identifier. Both or an input file must be provided. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> \nOr provide an input file: nextflow run main.nf --input_file <file> --cpus <cpus> --email <email>")
 }
 
 // If both an input file and individual SRA accession and/or identifier are provided, log a warning that only the input file will be used.
@@ -46,19 +152,14 @@ if ( params.input_file != '' && ( params.sra_accession != '' || params.identifie
 
 // If no email is provided, throw an error. 
 if ( params.email == '' ) {
-    error("No email provided. Specify it with --email. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
+    error("No email provided. Specify it with --email. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email>")
 }
 
 // If the provided CPU number is not a number, throw an error.
 if ( !params.cpus.toString().isNumber() ) {
-    error("Invalid CPU number provided. Specify it with --cpus <int>. It should be an integer. \nTo check the number of CPUs on your system: \n- Unix-based (Linux/MacOS/WSL2): use the 'nproc' command \n- To adjust system cpu and memory allocation for Docker, go to Docker Desktop, then settings/resources and set cpu and memory parameters. \nnextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> --architecture <arm64 or x86_64>")
+    error("Invalid CPU number provided. Specify it with --cpus <int>. It should be an integer. \nTo check the number of CPUs on your system: \n- Unix-based (Linux/MacOS/WSL2): use the 'nproc' command \n- To adjust system cpu and memory allocation for Docker, go to Docker Desktop, then settings/resources and set cpu and memory parameters. \nnextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email>")
 }
-
-// If the provided architecture is neither 'arm64' nor 'x86_64', throw an error.
-if ( params.architecture != 'arm64' && params.architecture != 'x86_64' ) {
-    error("Could not auto-detect system architecture and no valid --architecture was provided. Please specify --architecture 'arm64' or 'x86_64'. Your system reports: '${"uname -m".execute().text.trim()}'")
-}
-log.info("Using architecture: ${params.architecture}")
+log.info("Using container images from ${resolvedContainerRegistry}/${resolvedContainerNamespace}")
 
 include { get_srrs } from './nf_scripts/get_srrs'
 include { parse_srrs } from './nf_scripts/parse_srrs'
