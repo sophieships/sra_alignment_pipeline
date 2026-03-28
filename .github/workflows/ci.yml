@@ -72,5 +72,38 @@ jobs:
           fi
           assert_contains "${nextflow_output}" "images.bcftools must be an object" "missing required image manifest"
 
+      - name: Verify malformed unused manifest entries are ignored
+        run: |
+          ignored_extra_manifest="$(mktemp)"
+          python3 - "${ignored_extra_manifest}" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          manifest_path = Path(sys.argv[1])
+          manifest = json.loads(Path("conf/images.json").read_text(encoding="utf-8"))
+          manifest["images"]["unused_extra"] = {"runtime_name": "", "version": ""}
+          manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+          PY
+
+          nextflow run main.nf --help --image_manifest "${ignored_extra_manifest}" -ansi-log false
+
+      - name: Verify manifest-derived container refs on stub run
+        run: |
+          rm -rf work results .nextflow .nextflow.log .nextflow.log.*
+
+          nextflow run main.nf \
+            --input_file test_data/phage_smoke.csv \
+            --cpus 1 \
+            --email test@example.com \
+            -stub-run \
+            -ansi-log false
+
+          expected_ref="docker.io/eoksen/fastp:1.3.0"
+          if ! grep -R --fixed-strings --quiet "${expected_ref}" work/*/*/.command.run; then
+            echo "Expected stub-run task wrapper to contain manifest-derived container ref: ${expected_ref}" >&2
+            exit 1
+          fi
+
       - name: Run image manifest regression checks
         run: scripts/test_image_manifest.sh
