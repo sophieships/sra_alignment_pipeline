@@ -103,6 +103,24 @@ fi
 expect_failure_contains \
     "Option '--jobs' requires a value." \
     scripts/build_images.sh --jobs
+expect_failure_contains \
+    "--jobs must be a positive integer." \
+    scripts/build_images.sh --jobs 0
+expect_failure_contains \
+    "--jobs must be a positive integer." \
+    scripts/build_images.sh --jobs abc
+expect_failure_contains \
+    "--cache-mode must be one of: local, registry, none." \
+    scripts/build_images.sh --cache-mode invalid
+expect_failure_contains \
+    "Registry cache mode without --push requires an explicit --cache-ref." \
+    scripts/build_images.sh --cache-mode registry
+expect_failure_contains \
+    "Local builds can only use a single platform. Use --push for multi-platform builds." \
+    scripts/build_images.sh --platforms linux/amd64,linux/arm64
+expect_failure_contains \
+    "Unknown option: --nope" \
+    scripts/build_images.sh --nope
 
 missing_config="${tmp_root}/missing.json"
 expect_failure_contains \
