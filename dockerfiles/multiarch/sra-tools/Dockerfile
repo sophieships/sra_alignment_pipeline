@@ -1,0 +1,4 @@
+ARG SRA_TOOLS_VERSION=3.2.1
+FROM ncbi/sra-tools:${SRA_TOOLS_VERSION}
+
+WORKDIR /data
