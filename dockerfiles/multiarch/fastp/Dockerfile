@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:24.04 AS builder
 
 ARG LIBISAL_VERSION=v2.31.1
 ARG LIBDEFLATE_VERSION=v1.25
@@ -49,3 +49,21 @@ RUN git clone --branch "${FASTP_VERSION}" --depth 1 https://github.com/OpenGene/
     make install && \
     cd .. && \
     rm -rf fastp
+
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LD_LIBRARY_PATH=/usr/local/lib
+ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        libhwy1t64 \
+        zlib1g && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/local/bin/fastp /usr/local/bin/fastp
+COPY --from=builder /usr/local/lib/libdeflate.so* /usr/local/lib/
+COPY --from=builder /usr/lib/libisal.so* /usr/lib/
+COPY LICENSE.txt /licenses/fastp/LICENSE.txt
