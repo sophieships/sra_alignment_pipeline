@@ -1,6 +1,6 @@
 process run_bowtie2 {
     cpus params.cpus
-    container "eoksen/bowtie2.5.1:${params.architecture}"
+    container "${params.container_images.bowtie2}"
 
     input:
     tuple val(name), path(forward_reads), path(reverse_reads)

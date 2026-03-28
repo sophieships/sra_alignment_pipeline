@@ -1,7 +1,7 @@
 process run_bcftools_filter {
     cpus params.cpus
 
-    container 'eoksen/bcftools:1.17'
+    container "${params.container_images.bcftools}"
 
     publishDir "results/${vcf_file.simpleName}/filtered_vcfs", mode: 'copy'
 

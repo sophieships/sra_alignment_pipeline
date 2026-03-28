@@ -1,6 +1,6 @@
 process run_fastp {
     cpus params.cpus
-    container 'eoksen/fastp:v0.23.3'
+    container "${params.container_images.fastp}"
 
     publishDir "results/${name}/fastp", mode: 'copy'
 

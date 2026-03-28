@@ -1,5 +1,5 @@
 process parse_srrs {
-    container 'eoksen/sra-parser:1.0'
+    container "${params.container_images.sra_parser}"
 
     publishDir "results/${input_file}/srr_lists", mode: 'copy'
 

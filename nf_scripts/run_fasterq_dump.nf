@@ -1,6 +1,6 @@
 process run_fasterq_dump {
     cpus params.cpus
-    container 'ncbi/sra-tools:3.0.1'
+    container "${params.container_images.sra_tools}"
 
     shell '/bin/sh'
 

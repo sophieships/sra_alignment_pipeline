@@ -2,5 +2,8 @@ results
 nextflow_archive
 .nextflow
 .nextflow.log
+.nextflow.log.*
 work
 .DS_Store
+.buildx-cache/
+benchmarks/

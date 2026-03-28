@@ -1,6 +1,6 @@
 process download_fasta {
     maxForks 1
-    container 'eoksen/biopython-pysam:3.9'
+    container "${params.container_images.biopython}"
 
     storeDir "results/reference_genomes"
 
