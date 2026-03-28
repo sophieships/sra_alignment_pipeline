@@ -29,6 +29,25 @@ die() {
     exit 1
 }
 
+run_helper_capture_stdout() {
+    local stderr_file
+    stderr_file="$(mktemp)"
+
+    local helper_output=""
+    if ! helper_output="$(python3 "${HELPER_SCRIPT}" "$@" 2>"${stderr_file}")"; then
+        local error_output=""
+        if [[ -s "${stderr_file}" ]]; then
+            error_output="$(<"${stderr_file}")"
+        fi
+        rm -f "${stderr_file}"
+        printf '%s' "${error_output}"
+        return 1
+    fi
+
+    rm -f "${stderr_file}"
+    printf '%s' "${helper_output}"
+}
+
 usage() {
     cat <<'EOF'
 Usage: scripts/build_images.sh [OPTIONS]
@@ -116,87 +135,13 @@ build_cache_ref() {
     printf '%s:%s\n' "${cache_repo}" "${cache_tag}"
 }
 
-query_manifest() {
-    python3 - "$CONFIG_PATH" "$@" <<'PY'
-import json
-import sys
-from json import JSONDecodeError
-from pathlib import Path
-
-
-def require_object(parent, key, path_label):
-    value = parent.get(key)
-    if not isinstance(value, dict):
-        raise SystemExit(f"Manifest field '{path_label}' must be an object: {config_path}")
-    return value
-
-
-def require_string(parent, key, path_label):
-    value = parent.get(key)
-    if not isinstance(value, str) or not value.strip():
-        raise SystemExit(f"Manifest field '{path_label}' must be a non-empty string: {config_path}")
-    return value.strip()
-
-
-config_path = Path(sys.argv[1]).expanduser().resolve()
-command = sys.argv[2]
-
-try:
-    with config_path.open("r", encoding="utf-8") as handle:
-        manifest = json.load(handle)
-except FileNotFoundError as exc:
-    raise SystemExit(f"Manifest file not found: {config_path}") from exc
-except UnicodeDecodeError as exc:
-    raise SystemExit(f"Manifest file is not valid UTF-8: {config_path} ({exc})") from exc
-except JSONDecodeError as exc:
-    raise SystemExit(f"Manifest file is not valid JSON: {config_path} ({exc.msg})") from exc
-except OSError as exc:
-    detail = exc.strerror or str(exc)
-    raise SystemExit(f"Failed to read manifest file: {config_path} ({detail})") from exc
-
-if not isinstance(manifest, dict):
-    raise SystemExit(f"Manifest top-level JSON value must be an object: {config_path}")
-
-defaults = require_object(manifest, "defaults", "defaults")
-
-if command == "default-registry":
-    print(require_string(defaults, "registry", "defaults.registry"))
-elif command == "default-namespace":
-    print(require_string(defaults, "namespace", "defaults.namespace"))
-elif command == "default-publish-platforms":
-    publish_platforms = defaults.get("publish_platforms")
-    if not isinstance(publish_platforms, list) or not publish_platforms:
-        raise SystemExit(f"Manifest field 'defaults.publish_platforms' must be a non-empty array: {config_path}")
-
-    normalized_platforms = []
-    for index, platform in enumerate(publish_platforms):
-        if not isinstance(platform, str) or not platform.strip():
-            raise SystemExit(
-                f"Manifest field 'defaults.publish_platforms[{index}]' must be a non-empty string: {config_path}"
-            )
-        normalized_platforms.append(platform.strip())
-
-    print(",".join(normalized_platforms))
-elif command == "host-platform":
-    host_arch = sys.argv[3]
-    host_platform_map = require_object(defaults, "host_platform_map", "defaults.host_platform_map")
-    resolved_platform = host_platform_map.get(host_arch)
-    if not isinstance(resolved_platform, str) or not resolved_platform.strip():
-        valid_arches = ", ".join(sorted(host_platform_map))
-        raise SystemExit(f"Unsupported host architecture '{host_arch}'. Valid architectures: {valid_arches}")
-    print(resolved_platform.strip())
-else:
-    raise SystemExit(f"Unknown manifest query: {command}")
-PY
-}
-
 query_manifest_value() {
-    local query_name="$1"
+    local field_name="$1"
     shift
 
     local manifest_value
-    if ! manifest_value="$(query_manifest "${query_name}" "$@" 2>&1)"; then
-        die "Failed to read '${query_name}' from image manifest '${CONFIG_PATH}': ${manifest_value}"
+    if ! manifest_value="$(run_helper_capture_stdout default-value --config "${CONFIG_PATH}" --field "${field_name}" "$@")"; then
+        die "Failed to read '${field_name}' from image manifest '${CONFIG_PATH}': ${manifest_value}"
     fi
 
     printf '%s\n' "${manifest_value}"
@@ -361,23 +306,7 @@ build_target() {
     local -a build_arg_flags=()
     if [[ "${status}" == "success" ]]; then
         local build_arg_lines
-        if ! build_arg_lines="$(python3 - "${build_args_json}" 2>&1 <<'PY'
-import json
-import sys
-
-build_args = json.loads(sys.argv[1])
-if not isinstance(build_args, dict):
-    raise SystemExit("build args JSON must decode to an object")
-
-for key, value in build_args.items():
-    if not isinstance(key, str) or not key:
-        raise SystemExit("build arg names must be non-empty strings")
-    value_str = str(value)
-    if "\n" in key or "\n" in value_str:
-        raise SystemExit(f"Build arg '{key}' contains a newline, which is not supported.")
-    print(f"{key}={value_str}")
-PY
-        )"; then
+        if ! build_arg_lines="$(run_helper_capture_stdout build-arg-lines --build-args-json "${build_args_json}")"; then
             status="failed"
             failure_reason="Failed to parse build args for target '${name}': ${build_arg_lines}"
         else
@@ -519,14 +448,14 @@ case "${CACHE_MODE}" in
         ;;
 esac
 
-REGISTRY="${REGISTRY:-$(query_manifest_value default-registry)}"
-NAMESPACE="${NAMESPACE:-$(query_manifest_value default-namespace)}"
+REGISTRY="${REGISTRY:-$(query_manifest_value registry)}"
+NAMESPACE="${NAMESPACE:-$(query_manifest_value namespace)}"
 
 if [[ -z "${PLATFORMS}" ]]; then
     if [[ "${PUSH}" == true ]]; then
-        PLATFORMS="$(query_manifest_value default-publish-platforms)"
+        PLATFORMS="$(query_manifest_value publish-platforms)"
     else
-        PLATFORMS="$(query_manifest_value host-platform "$(uname -m)")"
+        PLATFORMS="$(query_manifest_value host-platform --host-arch "$(uname -m)")"
     fi
 fi
 
@@ -545,22 +474,17 @@ if [[ "${CACHE_MODE}" == "registry" && "${PUSH}" != true && -z "${CACHE_REF}" ]]
     exit 1
 fi
 
-if ! TARGET_JSON="$(
-    python3 "${HELPER_SCRIPT}" build-targets \
+if ! TARGET_ROWS="$(
+    run_helper_capture_stdout build-target-rows \
         --config "${CONFIG_PATH}" \
         --targets "${TARGETS}" \
         --changed-since "${CHANGED_SINCE}"
-    2>&1
 )"; then
-    die "Failed to resolve build targets from image manifest '${CONFIG_PATH}': ${TARGET_JSON}"
+    die "Failed to resolve build targets from image manifest '${CONFIG_PATH}': ${TARGET_ROWS}"
 fi
 
 if ! TARGET_COUNT="$(
-    python3 - "${TARGET_JSON}" <<'PY'
-import json
-import sys
-print(len(json.loads(sys.argv[1])))
-PY
+    printf '%s\n' "${TARGET_ROWS}" | awk 'NF {count += 1} END {print count + 0}'
 )"; then
     die "Failed to count resolved build targets."
 fi
@@ -584,30 +508,6 @@ TOTAL_START="$(date +%s)"
 BUILD_FAILED=0
 ACTIVE_PIDS=()
 ACTIVE_TARGET_NAMES=()
-# Expand the resolved target JSON once so helper failures cannot disappear inside a read loop.
-if ! TARGET_ROWS="$(
-    python3 - "${TARGET_JSON}" <<'PY'
-import json
-import sys
-
-targets = json.loads(sys.argv[1])
-for target in targets:
-    print(
-        "\t".join(
-            [
-                target["name"],
-                target["runtime_name"],
-                target["version"],
-                target["dockerfile"],
-                target["context"],
-                json.dumps(target["build_args"], separators=(",", ":")),
-            ]
-        )
-    )
-PY
-)"; then
-    die "Failed to prepare build target rows."
-fi
 
 while IFS=$'\t' read -r name runtime_name version dockerfile context build_args_json; do
     [[ -z "${name}" ]] && continue

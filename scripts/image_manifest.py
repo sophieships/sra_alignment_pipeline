@@ -61,6 +61,11 @@ def require_image_map(manifest: dict[str, Any], config_file: Path) -> dict[str, 
     return require_object(manifest, "images", config_file, "images")
 
 
+def require_defaults(manifest: dict[str, Any], config_file: Path) -> dict[str, Any]:
+    """Return the validated manifest defaults object."""
+    return require_object(manifest, "defaults", config_file, "defaults")
+
+
 def validate_target_definition(name: str, image_definition: Any, config_file: Path) -> dict[str, Any]:
     """Validate one image entry used by build helper commands."""
     if not isinstance(image_definition, dict):
@@ -78,6 +83,49 @@ def validate_target_definition(name: str, image_definition: Any, config_file: Pa
         raise SystemExit(f"Manifest field 'images.{name}.build.args' must be an object: {config_file}")
 
     return image_definition
+
+
+def default_value(
+    manifest: dict[str, Any],
+    config_file: Path,
+    field: str,
+    *,
+    host_arch: Optional[str] = None,
+) -> str:
+    """Return one normalized default value used by shell orchestration."""
+    defaults = require_defaults(manifest, config_file)
+
+    if field == "registry":
+        return require_string(defaults, "registry", config_file, "defaults.registry")
+
+    if field == "namespace":
+        return require_string(defaults, "namespace", config_file, "defaults.namespace")
+
+    if field == "publish-platforms":
+        publish_platforms = defaults.get("publish_platforms")
+        if not isinstance(publish_platforms, list) or not publish_platforms:
+            raise SystemExit(f"Manifest field 'defaults.publish_platforms' must be a non-empty array: {config_file}")
+
+        normalized_platforms: list[str] = []
+        for index, platform in enumerate(publish_platforms):
+            if not isinstance(platform, str) or not platform.strip():
+                raise SystemExit(
+                    f"Manifest field 'defaults.publish_platforms[{index}]' must be a non-empty string: {config_file}"
+                )
+            normalized_platforms.append(platform.strip())
+        return ",".join(normalized_platforms)
+
+    if field == "host-platform":
+        if not host_arch:
+            raise SystemExit("--host-arch is required when querying the host platform.")
+        host_platform_map = require_object(defaults, "host_platform_map", config_file, "defaults.host_platform_map")
+        resolved_platform = host_platform_map.get(host_arch)
+        if not isinstance(resolved_platform, str) or not resolved_platform.strip():
+            valid_arches = ", ".join(sorted(host_platform_map))
+            raise SystemExit(f"Unsupported host architecture '{host_arch}'. Valid architectures: {valid_arches}")
+        return resolved_platform.strip()
+
+    raise SystemExit(f"Unknown default field: {field}")
 
 
 def unique_preserving_order(values: list[str]) -> list[str]:
@@ -271,9 +319,63 @@ def build_targets(
     ]
 
 
+def build_target_rows(targets: list[dict[str, Any]]) -> list[str]:
+    """Return shell-friendly tab-separated target rows."""
+    rows: list[str] = []
+    for target in targets:
+        rows.append(
+            "\t".join(
+                [
+                    str(target["name"]),
+                    str(target["runtime_name"]),
+                    str(target["version"]),
+                    str(target["dockerfile"]),
+                    str(target["context"]),
+                    json.dumps(target["build_args"], separators=(",", ":")),
+                ]
+            )
+        )
+    return rows
+
+
+def build_arg_lines(build_args_json: str) -> list[str]:
+    """Return NAME=VALUE lines from a serialized build args object."""
+    try:
+        build_args = json.loads(build_args_json)
+    except JSONDecodeError as exc:
+        raise SystemExit(f"Build args payload is not valid JSON ({exc.msg})") from exc
+
+    if not isinstance(build_args, dict):
+        raise SystemExit("Build args JSON must decode to an object.")
+
+    lines: list[str] = []
+    for key, value in build_args.items():
+        if not isinstance(key, str) or not key:
+            raise SystemExit("Build arg names must be non-empty strings.")
+        value_str = str(value)
+        if "\n" in key or "\n" in value_str:
+            raise SystemExit(f"Build arg '{key}' contains a newline, which is not supported.")
+        lines.append(f"{key}={value_str}")
+    return lines
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Query the tracked container image manifest.")
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    default_value_parser = subparsers.add_parser("default-value", help="Print one normalized manifest default value.")
+    default_value_parser.add_argument("--config", required=True, help="Path to the image manifest JSON file.")
+    default_value_parser.add_argument(
+        "--field",
+        required=True,
+        choices=["registry", "namespace", "publish-platforms", "host-platform"],
+        help="Manifest default field to print.",
+    )
+    default_value_parser.add_argument(
+        "--host-arch",
+        default="",
+        help="Host architecture used when querying host-platform.",
+    )
 
     build_targets_parser = subparsers.add_parser("build-targets", help="Return buildable targets as JSON.")
     build_targets_parser.add_argument("--config", required=True, help="Path to the image manifest JSON file.")
@@ -291,8 +393,38 @@ def main() -> int:
     list_parser = subparsers.add_parser("list-targets", help="Print buildable target names.")
     list_parser.add_argument("--config", required=True, help="Path to the image manifest JSON file.")
 
+    target_rows_parser = subparsers.add_parser("build-target-rows", help="Print buildable targets as tab-separated rows.")
+    target_rows_parser.add_argument("--config", required=True, help="Path to the image manifest JSON file.")
+    target_rows_parser.add_argument(
+        "--targets",
+        default="",
+        help="Comma-separated subset of targets to include.",
+    )
+    target_rows_parser.add_argument(
+        "--changed-since",
+        default="",
+        help="Only include targets whose Dockerfile or build context changed since the provided git ref, or all selected targets if the manifest file changed.",
+    )
+
+    build_args_parser = subparsers.add_parser("build-arg-lines", help="Print NAME=VALUE lines from serialized build args JSON.")
+    build_args_parser.add_argument(
+        "--build-args-json",
+        required=True,
+        help="Compact JSON object containing build args.",
+    )
+
     args = parser.parse_args()
+
+    if args.command == "build-arg-lines":
+        for line in build_arg_lines(args.build_args_json):
+            print(line)
+        return 0
+
     manifest, config_file = load_manifest(args.config)
+
+    if args.command == "default-value":
+        print(default_value(manifest, config_file, args.field, host_arch=args.host_arch.strip() or None))
+        return 0
 
     if args.command == "list-targets":
         targets = build_targets(manifest, config_file, None, None)
@@ -303,6 +435,12 @@ def main() -> int:
     selected_targets = [value.strip() for value in args.targets.split(",") if value.strip()]
     changed_since = args.changed_since.strip() or None
     targets = build_targets(manifest, config_file, selected_targets or None, changed_since)
+
+    if args.command == "build-target-rows":
+        for row in build_target_rows(targets):
+            print(row)
+        return 0
+
     json.dump(targets, sys.stdout)
     sys.stdout.write("\n")
     return 0
