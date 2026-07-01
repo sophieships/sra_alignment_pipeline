@@ -193,6 +193,8 @@ include { run_samtools } from './nf_scripts/run_samtools' addParams(container_im
 include { run_bcftools } from './nf_scripts/run_bcftools' addParams(container_image: resolvedContainerImages['bcftools'])
 include { run_qualimap } from './nf_scripts/run_qualimap' addParams(container_image: resolvedContainerImages['qualimap'])
 include { run_bcftools_filter } from './nf_scripts/run_bcftools_filter' addParams(container_image: resolvedContainerImages['bcftools'])
+// run_multiqc hardcodes its own biocontainer, so it needs no container_image param.
+include { run_multiqc } from './nf_scripts/run_multiqc'
 
 workflow {
     if ( params.sra_accession && params.identifier && params.input_file == '' ) {
@@ -263,4 +265,16 @@ workflow {
     if ( params.include || params.exclude ) {
         run_bcftools_filter( run_bcftools.out.vcf_files )
     }
+
+    // Aggregate every per-sample QC/stats artifact into one MultiQC report.
+    // Mix the QC-producing outputs and collect() them into a single channel so
+    // MultiQC runs once over all files (fastp JSON, bowtie2 align summary,
+    // qualimap dir, bcftools stats).
+    multiqc_files = run_fastp.out.fastp_json_report
+        .mix( run_bowtie2.out.align_summary )
+        .mix( run_qualimap.out.qualimap_results )
+        .mix( run_bcftools.out.stats_files )
+        .collect()
+
+    run_multiqc( multiqc_files )
 }
