@@ -59,6 +59,13 @@ The pipeline automatically generates Nextflow execution reports under the output
 
 These are generated on every run. Open the HTML files in a browser to review.
 
+### Aggregated QC Report (MultiQC)
+After the per-sample QC and stats steps run, the `run_multiqc` process aggregates their outputs into a single interactive report (paths shown for the default `--outdir results`):
+- `results/multiqc/multiqc_report.html` — one HTML report summarizing every sample and step, including a General Statistics table.
+- `results/multiqc/multiqc_data/` — the parsed data tables and source list backing the report.
+
+MultiQC collects and parses the fastp JSON, bowtie2 alignment summary, qualimap bamqc results, and bcftools stats produced earlier in the run. Like all published outputs, it is written under `--outdir` (default `results/`), so `--outdir <path>` relocates it to `<path>/multiqc/`.
+
 ## Pipeline Overview
 The pipeline uses several different open-source packages, including:
 
@@ -73,6 +80,7 @@ The pipeline uses several different open-source packages, including:
 | `run_samtools` | **Samtools** | The `run_samtools` uses samtools to convert the alignment file from `run_bowtie2` from SAM to BAM and then sorts the BAM file. Additionally, samtools indexes the BAM file and the reference genome. | [Samtools](http://www.htslib.org/doc/samtools.html) | [Samtools](https://github.com/samtools/samtools) | samtools:1.23.1 |
 | `run_bcftools`, `run_bcftools_filter` | **Bcftools** | Bcftools is used in two distinct ways in this pipeline. Initially, in the `run_bcftools` process, Bcftools is employed for calling variants, generating consensus sequences, and producing statistical data and plots associated with the variant calling. Subsequently, in the `run_bcftools_filter` process, Bcftools filters variants based on inclusion or exclusion criteria provided by the user, generating filtered VCF files, statistics, and plots. If neither --include or --exclude options are provided by the user, then the filtering step will be skipped. | [Bcftools](http://www.htslib.org/doc/bcftools.html) | [Bcftools](https://github.com/samtools/bcftools) | bcftools:1.23.1 |
 | `run_qualimap` | **Qualimap** | The `run_qualimap` process uses qualimap to produce a quality control report for the sorted BAM file produced by samtools. | [Qualimap](http://qualimap.conesalab.org/) | [Qualimap](http://qualimap.conesalab.org/doc_html/index.html) | qualimap:2.3 |
+| `run_multiqc` | **MultiQC** | The `run_multiqc` process aggregates the per-sample QC/stats artifacts (fastp JSON, bowtie2 alignment summary, qualimap bamqc, bcftools stats) into a single interactive `multiqc_report.html` plus a `multiqc_data/` directory under `${outdir}/multiqc/`. It runs from the pinned biocontainer `quay.io/biocontainers/multiqc:1.25--pyhdfd78af_0`. | [MultiQC](https://multiqc.info/) | [MultiQC](https://github.com/MultiQC/MultiQC) | multiqc:1.25 |
 
 ## Usage
 
