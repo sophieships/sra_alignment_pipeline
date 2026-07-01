@@ -1,8 +1,8 @@
 process run_bcftools {
-    cpus params.cpus
+    label 'process_medium'
     container "${params.container_image}"
 
-    publishDir "results/${sorted_bam.simpleName}/bcftools", mode: 'copy'
+    publishDir "${params.outdir}/${sorted_bam.simpleName}/bcftools", mode: 'copy'
 
     input:
     path(sorted_bam)
@@ -28,5 +28,14 @@ process run_bcftools {
     # Calculate statistics and generate svg plots
     bcftools stats ${sorted_bam.simpleName}_calls.vcf.gz > ${sorted_bam.simpleName}_calls.vcf.gz.stats
     plot-vcfstats -v -p ${sorted_bam.simpleName}_stats_plots ${sorted_bam.simpleName}_calls.vcf.gz.stats
+    """
+
+    stub:
+    """
+    touch ${sorted_bam.simpleName}_calls.vcf.gz
+    touch ${sorted_bam.simpleName}_consensus.fasta
+    touch ${sorted_bam.simpleName}_calls.vcf.gz.stats
+    mkdir -p ${sorted_bam.simpleName}_stats_plots
+    touch ${sorted_bam.simpleName}_stats_plots/summary.txt
     """
 }

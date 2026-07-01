@@ -1,5 +1,5 @@
 process run_bowtie2 {
-    cpus params.cpus
+    label 'process_high_memory'
     container "${params.container_image}"
 
     input:
@@ -13,5 +13,10 @@ process run_bowtie2 {
     """
     bowtie2-build -f ${downloaded_fasta} ref_index -p ${task.cpus}
     bowtie2 -p ${task.cpus} -x ref_index -1 ${forward_reads} -2 ${reverse_reads} -S ${name}.sam --al ${name}_pair.align --un ${name}_pair.unmapped -L ${params.L} -X ${params.X} --fr -q -t
+    """
+
+    stub:
+    """
+    touch ${name}.sam ${name}_pair.align ${name}_pair.unmapped
     """
 }

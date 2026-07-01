@@ -1,9 +1,9 @@
 process run_bcftools_filter {
-    cpus params.cpus
+    label 'process_medium'
 
     container "${params.container_image}"
 
-    publishDir "results/${vcf_file.simpleName}/filtered_vcfs", mode: 'copy'
+    publishDir "${params.outdir}/${vcf_file.simpleName}/filtered_vcfs", mode: 'copy'
 
     input:
     path(vcf_file)
@@ -33,5 +33,13 @@ process run_bcftools_filter {
         mkdir -p filtered_stats_plots/included
         plot-vcfstats -p filtered_stats_plots/included/ filtered_stats_files/included/included.vcf.gz.stats
     fi
+    """
+
+    stub:
+    """
+    touch stub_filtered.vcf.gz
+    mkdir -p filtered_stats_files filtered_stats_plots
+    touch filtered_stats_files/stub.vcf.gz.stats
+    touch filtered_stats_plots/stub.png
     """
 }

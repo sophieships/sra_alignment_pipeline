@@ -1,7 +1,8 @@
 process parse_srrs {
+    label 'process_low'
     container "${params.container_image}"
 
-    publishDir "results/${input_file}/srr_lists", mode: 'copy'
+    publishDir "${params.outdir}/${input_file}/srr_lists", mode: 'copy'
 
     input:
     path(input_file)
@@ -12,5 +13,10 @@ process parse_srrs {
     script:
     """
     python /scripts/sra_parser.py ${input_file} > ${input_file}_srr_list.csv
+    """
+
+    stub:
+    """
+    cat ${input_file} > ${input_file}_srr_list.csv
     """
 }

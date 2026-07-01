@@ -1,8 +1,8 @@
 process run_samtools {
-    cpus params.cpus
+    label 'process_medium'
     container "${params.container_image}"
 
-    publishDir "results/${name}/samtools", mode: 'copy'
+    publishDir "${params.outdir}/${name}/samtools", mode: 'copy'
 
     input:
     tuple val(name), path(sam_file), path(pair_align), path(pair_unmapped)
@@ -19,5 +19,11 @@ process run_samtools {
     samtools sort -@ ${task.cpus} -o ${sam_file.baseName}.sorted.bam ${sam_file.baseName}.bam
     samtools index ${sam_file.baseName}.sorted.bam
     samtools faidx ${downloaded_fasta}
+    """
+
+    stub:
+    """
+    touch ${sam_file.baseName}.sorted.bam ${sam_file.baseName}.sorted.bam.bai
+    touch ${downloaded_fasta}.fai
     """
 }

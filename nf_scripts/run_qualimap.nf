@@ -1,8 +1,8 @@
 process run_qualimap {
-    cpus params.cpus
+    label 'process_medium'
     container "${params.container_image}"
 
-    publishDir "results/${sorted_bam.simpleName}/qualimap", mode: 'copy'
+    publishDir "${params.outdir}/${sorted_bam.simpleName}/qualimap", mode: 'copy'
 
     input:
     path(sorted_bam)
@@ -13,5 +13,11 @@ process run_qualimap {
     script:
     """
     qualimap bamqc -outdir ${sorted_bam.simpleName} -bam ${sorted_bam} -nt ${task.cpus}
+    """
+
+    stub:
+    """
+    mkdir -p ${sorted_bam.simpleName}
+    touch ${sorted_bam.simpleName}/qualimapReport.html
     """
 }

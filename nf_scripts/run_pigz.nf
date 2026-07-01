@@ -1,8 +1,8 @@
 process run_pigz {
-    cpus params.cpus
+    label 'process_low'
     container "${params.container_image}"
 
-    publishDir "results/${sra_accession}/fastq", mode: 'copy'
+    publishDir "${params.outdir}/${sra_accession}/fastq", mode: 'copy'
 
 
     input:
@@ -20,5 +20,10 @@ process run_pigz {
     """
     pigz -f -p ${task.cpus} ${forward_reads}
     pigz -f -p ${task.cpus} ${reverse_reads}
+    """
+
+    stub:
+    """
+    touch ${sra_accession}_1.fastq.gz ${sra_accession}_2.fastq.gz
     """
 }

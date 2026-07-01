@@ -1,7 +1,8 @@
 process get_srrs {
+    label 'process_low'
     container "${params.container_image}"
 
-    publishDir "results/${accession}/srr_lists", mode: 'copy'
+    publishDir "${params.outdir}/${accession}/srr_lists", mode: 'copy'
 
     input:
     val(accession)
@@ -13,5 +14,10 @@ process get_srrs {
     script:
     """
     python /scripts/sra_parser.py ${accession} ${identifier} > ${accession}_srr_list.csv
+    """
+
+    stub:
+    """
+    echo "${accession},${identifier}" > ${accession}_srr_list.csv
     """
 }

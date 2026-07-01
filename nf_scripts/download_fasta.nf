@@ -1,8 +1,9 @@
 process download_fasta {
+    label 'process_low'
     maxForks 1
     container "${params.container_image}"
 
-    storeDir "results/reference_genomes"
+    storeDir "${params.outdir}/reference_genomes"
 
     input:
     val sra_accession
@@ -16,5 +17,10 @@ process download_fasta {
     """
     echo "Downloading fasta file for ${identifierVal}"
     python /scripts/download_fasta.py ${identifierVal} ${emailval}
+    """
+
+    stub:
+    """
+    touch ${identifierVal}_reference.fasta.gz
     """
 }

@@ -1,5 +1,5 @@
 process run_fasterq_dump {
-    cpus params.cpus
+    label 'process_medium'
     container "${params.container_image}"
 
     shell '/bin/sh'
@@ -19,5 +19,10 @@ process run_fasterq_dump {
     """
     prefetch ${download_status.SimpleName}
     fasterq-dump ${download_status.SimpleName} --threads ${task.cpus} -b 100M -c 200M -m 4G
+    """
+
+    stub:
+    """
+    touch ${download_status.SimpleName}_1.fastq ${download_status.SimpleName}_2.fastq
     """
 }
