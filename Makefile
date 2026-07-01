@@ -15,7 +15,7 @@ help:
 ci: pipeline-check manifest-validation manifest-stub image-manifest-tests build-images-tests
 
 pipeline-check:
-	nextflow run main.nf --help -ansi-log false
+	nextflow run main.nf --help -profile docker -ansi-log false
 
 manifest-validation:
 	@bad_json="$$(mktemp)" && \
@@ -60,7 +60,7 @@ manifest-validation:
 	rm -f "$$ignored_extra_manifest"
 
 manifest-stub: clean-ci-artifacts
-	nextflow run main.nf --input_file test_data/phage_smoke.csv --cpus 1 --email test@example.com -stub-run -ansi-log false
+	nextflow run main.nf --input_file test_data/phage_smoke.csv --cpus 1 --email test@example.com -profile docker -stub-run -ansi-log false
 	grep -R --fixed-strings --quiet "docker.io/eoksen/fastp:1.3.0" work/*/*/.command.run
 
 image-manifest-tests:
