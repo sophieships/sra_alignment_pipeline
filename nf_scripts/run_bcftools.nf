@@ -2,7 +2,7 @@ process run_bcftools {
     label 'process_medium'
     container "${params.container_image}"
 
-    publishDir "results/${sorted_bam.simpleName}/bcftools", mode: 'copy'
+    publishDir "${params.outdir}/${sorted_bam.simpleName}/bcftools", mode: 'copy'
 
     input:
     path(sorted_bam)

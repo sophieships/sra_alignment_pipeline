@@ -2,7 +2,7 @@ process run_samtools {
     label 'process_medium'
     container "${params.container_image}"
 
-    publishDir "results/${name}/samtools", mode: 'copy'
+    publishDir "${params.outdir}/${name}/samtools", mode: 'copy'
 
     input:
     tuple val(name), path(sam_file), path(pair_align), path(pair_unmapped)

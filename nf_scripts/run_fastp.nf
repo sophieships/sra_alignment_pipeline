@@ -2,7 +2,7 @@ process run_fastp {
     label 'process_medium'
     container "${params.container_image}"
 
-    publishDir "results/${name}/fastp", mode: 'copy'
+    publishDir "${params.outdir}/${name}/fastp", mode: 'copy'
 
     input:
     tuple val(name), path(forward_reads), path(reverse_reads)

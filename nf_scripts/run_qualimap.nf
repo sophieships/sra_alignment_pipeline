@@ -2,7 +2,7 @@ process run_qualimap {
     label 'process_medium'
     container "${params.container_image}"
 
-    publishDir "results/${sorted_bam.simpleName}/qualimap", mode: 'copy'
+    publishDir "${params.outdir}/${sorted_bam.simpleName}/qualimap", mode: 'copy'
 
     input:
     path(sorted_bam)

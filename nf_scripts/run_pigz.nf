@@ -2,7 +2,7 @@ process run_pigz {
     label 'process_low'
     container "${params.container_image}"
 
-    publishDir "results/${sra_accession}/fastq", mode: 'copy'
+    publishDir "${params.outdir}/${sra_accession}/fastq", mode: 'copy'
 
 
     input:

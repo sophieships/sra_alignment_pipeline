@@ -4,7 +4,7 @@ process download_fastq {
     container "${params.container_image}"
     errorStrategy 'ignore'
 
-    publishDir "results/${sra_accession}/fastq", mode: 'copy'
+    publishDir "${params.outdir}/${sra_accession}/fastq", mode: 'copy'
 
     input:
     val sra_accession

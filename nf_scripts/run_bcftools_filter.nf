@@ -3,7 +3,7 @@ process run_bcftools_filter {
 
     container "${params.container_image}"
 
-    publishDir "results/${vcf_file.simpleName}/filtered_vcfs", mode: 'copy'
+    publishDir "${params.outdir}/${vcf_file.simpleName}/filtered_vcfs", mode: 'copy'
 
     input:
     path(vcf_file)
