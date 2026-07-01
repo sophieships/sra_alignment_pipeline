@@ -23,9 +23,10 @@ SRA Alignment Pipeline
 - You can learn more about these databases by following these links: [SRA](https://www.ncbi.nlm.nih.gov/sra/docs/) and [NCBI Nucleotide](https://www.ncbi.nlm.nih.gov/books/NBK49541/). 
 
 ## Installation
-**Important:** Before you can use this pipeline, you need to install Nextflow and Docker. 
+**Important:** Before you can use this pipeline, you need to install Nextflow and a supported container engine.
 - Nextflow can be installed by following the instructions [here](https://www.nextflow.io/docs/latest/getstarted.html). 
 - Docker can be installed by following the instructions [here](https://docs.docker.com/get-docker/). 
+- The pipeline selects its container/environment engine with `-profile` (Docker, Singularity, Apptainer, Podman, or experimental Conda). On HPC/cluster environments where the Docker daemon is not permitted, use `-profile singularity` or `-profile apptainer` (both pull the existing Docker images directly). See [Execution Profiles](#execution-profiles) for details.
 - This pipeline now resolves its runtime images from a tracked image manifest and has been modernized for current multi-architecture Docker builds. Local validation in this repository was performed with Nextflow 22.10.7 and Docker 29.x on arm64, and CI currently exercises Nextflow 23.04.0 on Ubuntu.
 
 ## Input Data
@@ -74,10 +75,27 @@ The pipeline uses several different open-source packages, including:
 | `run_qualimap` | **Qualimap** | The `run_qualimap` process uses qualimap to produce a quality control report for the sorted BAM file produced by samtools. | [Qualimap](http://qualimap.conesalab.org/) | [Qualimap](http://qualimap.conesalab.org/doc_html/index.html) | qualimap:2.3 |
 
 ## Usage
+
+### Execution Profiles
+
+Processes run inside containers, and you must select a container/environment engine explicitly with `-profile <engine>`. Profiles are **mutually exclusive** — exactly one engine is enabled per run, and no engine is enabled by default. Docker is the documented default engine, so existing commands simply add `-profile docker`.
+
+| Profile | Engine | Notes |
+| --- | --- | --- |
+| `docker` | Docker | Default documented engine. |
+| `singularity` | Singularity | For HPC/clusters where Docker is not permitted. `autoMounts` enabled. Pulls the existing Docker images directly. |
+| `apptainer` | Apptainer | Apptainer (the successor to Singularity). `autoMounts` enabled. Pulls the existing Docker images directly. |
+| `conda` | Conda | **Experimental** — scaffold only, pending the biocontainers migration ([issue #32](https://github.com/sophieships/sra_alignment_pipeline/issues/32)). Current runtime images are custom Docker images that do not translate to Conda, so this profile is not yet usable. |
+| `podman` | Podman | Optional Docker-compatible daemonless engine. |
+
+Add the profile flag to any `nextflow run` command, e.g. `-profile docker` or `-profile singularity`.
+
 ```
-nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main [OPTIONS] OR nextflow run main.nf [OPTIONS]
+nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main -profile docker [OPTIONS] OR nextflow run main.nf -profile docker [OPTIONS]
 
 OPTIONS:
+-profile <docker|singularity|apptainer|conda|podman> Container/environment engine used to run processes. Required. Docker is the documented default; singularity/apptainer suit HPC clusters; conda is experimental (see Execution Profiles above).
+
 --cpus <int> The number of CPUs you want to use for processing, default: 2. Only the cpus available to your docker daemon can be used.
 
 --email <ncbi-email-address> Your email address registered with NCBI, required.
@@ -109,10 +127,10 @@ OPTIONS:
 ### **Option #1: Run from Github**
 To run with sra_accession and identifier provided on the cli, execute the following command in your terminal
 ```bash
-nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main --sra_accession <sra_accession> --identifier <ncbi-id> --cpus <int> --email <ncbi-email-address> -resume```
+nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main -profile docker --sra_accession <sra_accession> --identifier <ncbi-id> --cpus <int> --email <ncbi-email-address> -resume```
 To run with an input file, execute the following command in your terminal
 ```bash
-nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> -resume```
+nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main -profile docker --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> -resume```
 
 ### **Option #2: Clone repo from Github to your local environment**
 You can clone the repo using either by HTTPS:
@@ -126,16 +144,16 @@ gh repo clone sophieships/sra_alignment_pipeline
 To run with sra_accession and identifier provided on the cli, execute the following command in your terminal at the root of the cloned repo:
 
 ```bash
-nextflow run main.nf --sra_accession <sra_accession> --identifier <ncbi-id> --cpus <int> --email <ncbi-email-address> -resume
+nextflow run main.nf -profile docker --sra_accession <sra_accession> --identifier <ncbi-id> --cpus <int> --email <ncbi-email-address> -resume
 ```
 To run with an input file, execute the following command in your terminal at the root of the cloned repo:
 ```bash
-nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> -resume```
+nextflow run main.nf -profile docker --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> -resume```
 
 ## Test the Pipeline
 Two input files are provided in the `test_data` directory. To run the pipeline on the test data, execute the following command in your terminal at the root of the cloned repo:
 ```bash
-nextflow run main.nf --input_file test_data/test1/test1.csv --cpus <int> --email <ncbi-email-address> -resume```
+nextflow run main.nf -profile docker --input_file test_data/test1/test1.csv --cpus <int> --email <ncbi-email-address> -resume```
 
 For this file, process execution should look like:
 
@@ -168,7 +186,7 @@ scripts/archive_nf.sh
 
 Or you can run the pipeline and the script in one command:
 ```bash
-nextflow run main.nf --input_file test_data/test1/test1.csv --cpus <int> --email <ncbi-email-address> -resume && scripts/archive_nf.sh
+nextflow run main.nf -profile docker --input_file test_data/test1/test1.csv --cpus <int> --email <ncbi-email-address> -resume && scripts/archive_nf.sh
 ```
 This command will:
 
@@ -185,7 +203,7 @@ Remember to run the script from the same directory where you ran the Nextflow pi
 ## Pipeline Directed Acyclic Graphs
 - DAGs were generated using the `-with-dag` option with both `nextflow run` command, e.g.:
 ```bash
-nextflow run main.nf --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> -resume -with-dag dag_name.mmd
+nextflow run main.nf -profile docker --input_file <path/to/input/file.csv> --cpus <int> --email <ncbi-email-address> -resume -with-dag dag_name.mmd
 ```
 - The contents of the .mmd file were then loaded into [Mermaidv10.2.2 Live Editor](https://mermaid.live/edit#pako:eNpVjk2Lg0AMhv9KyGkL9Q94WGh1t5fCFurN6SFo7AztfDBGpKj_fcd62c0pvM_zhkzY-JYxx-7px0ZTFKhK5SDNoS50NL1Y6m-QZZ_ziQWsd_ya4fhx8tBrH4Jx993mH1cJium8agyijXssGyre_R_HM5T1mYL4cPtLqtHP8FWbi07n_xMdObW-647yjrKGIhQU3wru0XK0ZNr0_rQmCkWzZYV5WlvuaHiKQuWWpNIg_vpyDeYSB97jEFoSLg3dI9ktXH4B_cJWqw) to create the DAGs below.
 
