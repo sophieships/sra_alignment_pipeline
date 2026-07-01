@@ -20,4 +20,10 @@ process run_samtools {
     samtools index ${sam_file.baseName}.sorted.bam
     samtools faidx ${downloaded_fasta}
     """
+
+    stub:
+    """
+    touch ${sam_file.baseName}.sorted.bam ${sam_file.baseName}.sorted.bam.bai
+    touch ${downloaded_fasta}.fai
+    """
 }

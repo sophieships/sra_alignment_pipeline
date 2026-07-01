@@ -18,4 +18,10 @@ process run_fastp {
     export LD_LIBRARY_PATH=/usr/local/lib
     fastp -w ${task.cpus} -i ${forward_reads} -I ${reverse_reads} -o ${name}_trimmed_1.fastq.gz -O ${name}_trimmed_2.fastq.gz -h ${name}_fastp_report.html -j ${name}_fastp_report.json
     """
+
+    stub:
+    """
+    touch ${name}_trimmed_1.fastq.gz ${name}_trimmed_2.fastq.gz
+    touch ${name}_fastp_report.html ${name}_fastp_report.json
+    """
 }

@@ -14,4 +14,9 @@ process parse_srrs {
     """
     python /scripts/sra_parser.py ${input_file} > ${input_file}_srr_list.csv
     """
+
+    stub:
+    """
+    cat ${input_file} > ${input_file}_srr_list.csv
+    """
 }

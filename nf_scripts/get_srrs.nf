@@ -15,4 +15,9 @@ process get_srrs {
     """
     python /scripts/sra_parser.py ${accession} ${identifier} > ${accession}_srr_list.csv
     """
+
+    stub:
+    """
+    echo "${accession},${identifier}" > ${accession}_srr_list.csv
+    """
 }

@@ -29,4 +29,13 @@ process run_bcftools {
     bcftools stats ${sorted_bam.simpleName}_calls.vcf.gz > ${sorted_bam.simpleName}_calls.vcf.gz.stats
     plot-vcfstats -v -p ${sorted_bam.simpleName}_stats_plots ${sorted_bam.simpleName}_calls.vcf.gz.stats
     """
+
+    stub:
+    """
+    touch ${sorted_bam.simpleName}_calls.vcf.gz
+    touch ${sorted_bam.simpleName}_consensus.fasta
+    touch ${sorted_bam.simpleName}_calls.vcf.gz.stats
+    mkdir -p ${sorted_bam.simpleName}_stats_plots
+    touch ${sorted_bam.simpleName}_stats_plots/summary.txt
+    """
 }

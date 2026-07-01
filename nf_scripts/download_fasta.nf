@@ -18,4 +18,9 @@ process download_fasta {
     echo "Downloading fasta file for ${identifierVal}"
     python /scripts/download_fasta.py ${identifierVal} ${emailval}
     """
+
+    stub:
+    """
+    touch ${identifierVal}_reference.fasta.gz
+    """
 }

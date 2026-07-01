@@ -14,4 +14,10 @@ process run_qualimap {
     """
     qualimap bamqc -outdir ${sorted_bam.simpleName} -bam ${sorted_bam} -nt ${task.cpus}
     """
+
+    stub:
+    """
+    mkdir -p ${sorted_bam.simpleName}
+    touch ${sorted_bam.simpleName}/qualimapReport.html
+    """
 }
