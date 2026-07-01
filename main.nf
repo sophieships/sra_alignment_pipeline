@@ -115,8 +115,15 @@ if (params.help) {
     ======================
 
     Usage:
-      nextflow run main.nf [OPTIONS]
-      nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main [OPTIONS]
+      nextflow run main.nf -profile docker [OPTIONS]
+      nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main -profile docker [OPTIONS]
+
+    Execution profile (required to run processes; choose ONE engine):
+      -profile docker           Run processes with Docker (default documented engine)
+      -profile singularity      Run processes with Singularity (HPC; autoMounts enabled)
+      -profile apptainer        Run processes with Apptainer (HPC; autoMounts enabled)
+      -profile conda            EXPERIMENTAL, pending biocontainers migration (issue #32)
+      -profile podman           Run processes with Podman
 
     Required:
       --email <address>         NCBI-registered email address
