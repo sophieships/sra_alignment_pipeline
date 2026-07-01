@@ -1,5 +1,5 @@
 process run_fasterq_dump {
-    cpus params.cpus
+    label 'process_medium'
     container "${params.container_image}"
 
     shell '/bin/sh'

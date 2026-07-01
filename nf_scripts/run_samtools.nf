@@ -1,5 +1,5 @@
 process run_samtools {
-    cpus params.cpus
+    label 'process_medium'
     container "${params.container_image}"
 
     publishDir "results/${name}/samtools", mode: 'copy'

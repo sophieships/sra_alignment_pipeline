@@ -1,5 +1,5 @@
 process run_bcftools_filter {
-    cpus params.cpus
+    label 'process_medium'
 
     container "${params.container_image}"
 

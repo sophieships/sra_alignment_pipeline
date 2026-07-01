@@ -1,4 +1,5 @@
 process parse_srrs {
+    label 'process_low'
     container "${params.container_image}"
 
     publishDir "results/${input_file}/srr_lists", mode: 'copy'

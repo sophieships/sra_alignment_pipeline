@@ -1,4 +1,5 @@
 process download_fasta {
+    label 'process_low'
     maxForks 1
     container "${params.container_image}"
 

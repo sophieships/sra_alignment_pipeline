@@ -1,4 +1,5 @@
 process get_srrs {
+    label 'process_low'
     container "${params.container_image}"
 
     publishDir "results/${accession}/srr_lists", mode: 'copy'

@@ -1,5 +1,5 @@
 process run_bowtie2 {
-    cpus params.cpus
+    label 'process_high_memory'
     container "${params.container_image}"
 
     input:
