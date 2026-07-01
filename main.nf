@@ -127,7 +127,9 @@ if (params.help) {
 
     Required:
       --email <address>         NCBI-registered email address
-      --cpus <int>              Number of CPUs (default: 2)
+      --cpus <int>              Upper cap on per-process CPUs (default: 2). Per-process
+                                requests come from resource labels; --cpus caps them
+                                (e.g. --cpus 1 forces every task to a single core).
 
     Input (one required):
       --sra_accession <id>      SRA accession number (requires --identifier)
@@ -135,6 +137,11 @@ if (params.help) {
       --input_file <path>       CSV with columns: sra_accession, identifier
 
     Optional:
+      --outdir <path>           Directory for all published outputs and execution
+                                reports (default: results)
+      --max_cpus <int>          Cap on CPUs any single process may request (default: 8)
+      --max_memory <str>        Cap on memory any single process may request (default: 16.GB)
+      --max_time <str>          Cap on wall time any single process may request (default: 24.h)
       --image_manifest <path>   Path to the tracked container image manifest
       --container_registry <r>  Override the container registry from the manifest
       --container_namespace <n> Override the container namespace from the manifest
