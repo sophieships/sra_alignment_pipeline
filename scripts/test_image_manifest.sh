@@ -77,7 +77,7 @@ trap 'rm -rf "${tmp_root}"' EXIT
 
 cd "${REPO_ROOT}"
 
-expected_targets=$'aria2\nbcftools\nbiopython\nbowtie2\nfastp\npigz\nqualimap\nsamtools\nsra_parser\nsra_tools'
+expected_targets=$'bcftools\nbowtie2\nfastp\npigz\nqualimap\nsamtools\nsra_tools'
 expect_output_equals \
     "${expected_targets}" \
     python3 scripts/image_manifest.py list-targets --config conf/images.json

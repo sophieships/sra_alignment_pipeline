@@ -15,18 +15,8 @@
   },
   "images": {
     "aria2": {
-      "runtime_name": "aria2-sra-download",
-      "version": "1.37.0",
-      "registry": "docker.io",
-      "namespace": "eoksen",
-      "build": {
-        "enabled": true,
-        "dockerfile": "dockerfiles/multiarch/aria2/Dockerfile",
-        "context": "dockerfiles/multiarch/aria2",
-        "args": {
-          "ARIA2_VERSION": "1.37.0"
-        }
-      }
+      "runtime_name": "aria2",
+      "version": "1.36.0"
     },
     "bcftools": {
       "runtime_name": "bcftools",
