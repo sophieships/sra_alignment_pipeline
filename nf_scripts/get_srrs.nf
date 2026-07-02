@@ -13,7 +13,7 @@ process get_srrs {
 
     script:
     """
-    python /scripts/sra_parser.py ${accession} ${identifier} > ${accession}_srr_list.csv
+    sra_parser.py ${accession} ${identifier} > ${accession}_srr_list.csv
     """
 
     stub:

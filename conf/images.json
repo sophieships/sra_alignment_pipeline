@@ -119,22 +119,8 @@
       }
     },
     "sra_parser": {
-      "runtime_name": "sra-parser",
-      "version": "1.1.0",
-      "registry": "docker.io",
-      "namespace": "eoksen",
-      "build": {
-        "enabled": true,
-        "dockerfile": "dockerfiles/multiarch/sra-parser/Dockerfile",
-        "context": "dockerfiles/multiarch/sra-parser",
-        "args": {
-          "PYTHON_IMAGE": "python:3.13-slim-bookworm",
-          "REQUESTS_VERSION": "2.32.3",
-          "BEAUTIFULSOUP4_VERSION": "4.12.3",
-          "LXML_VERSION": "5.3.0",
-          "HTML5LIB_VERSION": "1.1"
-        }
-      }
+      "runtime_name": "requests",
+      "version": "2.26.0"
     },
     "sra_tools": {
       "runtime_name": "sra-tools",
