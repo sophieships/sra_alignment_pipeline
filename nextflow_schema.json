@@ -1,0 +1,177 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/sophieships/sra_alignment_pipeline/main/nextflow_schema.json",
+    "title": "sra_alignment_pipeline pipeline parameters",
+    "description": "Align sequence data from the SRA to an NCBI reference genome and call variants.",
+    "type": "object",
+    "$defs": {
+        "required_options": {
+            "title": "Required options",
+            "type": "object",
+            "description": "Options that must be supplied for every run.",
+            "required": ["email"],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "description": "NCBI-registered email address. Required for NCBI/Entrez access.",
+                    "help_text": "Providing an email address is required when accessing the NCBI services this pipeline depends on. Register one at https://account.ncbi.nlm.nih.gov."
+                },
+                "cpus": {
+                    "type": "integer",
+                    "default": 2,
+                    "minimum": 1,
+                    "description": "Upper cap on per-process CPUs (default: 2).",
+                    "help_text": "Per-process requests come from nf-core-style resource labels; --cpus caps them (e.g. --cpus 1 forces every task to a single core). Bounded by the CPUs your container engine is allowed to use."
+                }
+            }
+        },
+        "input_options": {
+            "title": "Input options",
+            "type": "object",
+            "description": "Provide either --input_file, or both --sra_accession and --identifier.",
+            "properties": {
+                "sra_accession": {
+                    "type": "string",
+                    "default": "",
+                    "description": "SRA accession number (requires --identifier).",
+                    "help_text": "Any SRA accession type can be used (SRR/ERR/DRR, SRX/ERX/DRX, SRP/ERP/DRP, etc.). Up to 20 SRRs associated with the accession are downloaded."
+                },
+                "identifier": {
+                    "type": "string",
+                    "default": "",
+                    "description": "NCBI nucleotide identifier for the reference genome (requires --sra_accession).",
+                    "help_text": "Entrez nucleotide identifier for the reference genome FASTA, e.g. NC_000866.4, CP014314.1. Only one identifier can be provided and is used for all SRRs of the accession."
+                },
+                "input_file": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to a CSV with columns: sra_accession, identifier.",
+                    "help_text": "A CSV file with two columns (column 1: sra_accession, column 2: identifier). When provided, it takes precedence over --sra_accession/--identifier."
+                }
+            }
+        },
+        "output_options": {
+            "title": "Output options",
+            "type": "object",
+            "description": "Where published outputs and execution reports are written.",
+            "properties": {
+                "outdir": {
+                    "type": "string",
+                    "default": "results",
+                    "description": "Directory for all published outputs and execution reports (default: results).",
+                    "help_text": "Every publishDir output plus the report/timeline/trace files are written under this directory, so runs can be kept separate."
+                }
+            }
+        },
+        "resource_options": {
+            "title": "Resource options",
+            "type": "object",
+            "description": "Laptop-sane ceilings that cap what any single process may request.",
+            "properties": {
+                "max_cpus": {
+                    "type": "integer",
+                    "default": 8,
+                    "minimum": 1,
+                    "description": "Cap on CPUs any single process may request (default: 8)."
+                },
+                "max_memory": {
+                    "type": "string",
+                    "default": "16.GB",
+                    "description": "Cap on memory any single process may request (default: 16.GB).",
+                    "help_text": "Use a Nextflow memory string such as '16.GB' or '32.GB'."
+                },
+                "max_time": {
+                    "type": "string",
+                    "default": "24.h",
+                    "description": "Cap on wall time any single process may request (default: 24.h).",
+                    "help_text": "Use a Nextflow duration string such as '24.h' or '2.d'."
+                }
+            }
+        },
+        "container_options": {
+            "title": "Container options",
+            "type": "object",
+            "description": "Control which container images the pipeline resolves at runtime.",
+            "properties": {
+                "image_manifest": {
+                    "type": "string",
+                    "default": "conf/images.json",
+                    "description": "Path to the tracked container image manifest (default: conf/images.json)."
+                },
+                "container_registry": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Override the container registry from the manifest."
+                },
+                "container_namespace": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Override the container namespace from the manifest."
+                }
+            }
+        },
+        "alignment_and_variant_calling_options": {
+            "title": "Alignment and variant-calling options",
+            "type": "object",
+            "description": "Tuning for bowtie2 alignment and bcftools variant calling/filtering.",
+            "properties": {
+                "L": {
+                    "type": "integer",
+                    "default": 22,
+                    "description": "Bowtie2 seed length (default: 22).",
+                    "help_text": "Length of the seed substrings to align during multiseed alignment. Smaller values make alignment slower but more sensitive. Must be smaller than the read length."
+                },
+                "X": {
+                    "type": "integer",
+                    "default": 600,
+                    "description": "Bowtie2 max insert size (default: 600).",
+                    "help_text": "The maximum fragment length for valid paired-end alignments."
+                },
+                "ploidy": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "Ploidy for variant calling (default: 1)."
+                },
+                "include": {
+                    "type": "string",
+                    "default": "",
+                    "description": "bcftools filter inclusion expression.",
+                    "help_text": "Providing --include or --exclude enables the run_bcftools_filter step. Use a bcftools filter expression in single quotes, e.g. 'DP>200'."
+                },
+                "exclude": {
+                    "type": "string",
+                    "default": "",
+                    "description": "bcftools filter exclusion expression.",
+                    "help_text": "Providing --include or --exclude enables the run_bcftools_filter step. Use a bcftools filter expression in single quotes."
+                }
+            }
+        },
+        "generic_options": {
+            "title": "Generic options",
+            "type": "object",
+            "description": "Less commonly used options.",
+            "properties": {
+                "help": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Show the help message (schema-generated) and exit.",
+                    "hidden": true
+                },
+                "container_image": {
+                    "type": "string",
+                    "description": "Internal: per-process container image reference injected into each module via addParams(); not intended to be set on the command line.",
+                    "hidden": true
+                }
+            }
+        }
+    },
+    "allOf": [
+        { "$ref": "#/$defs/required_options" },
+        { "$ref": "#/$defs/input_options" },
+        { "$ref": "#/$defs/output_options" },
+        { "$ref": "#/$defs/resource_options" },
+        { "$ref": "#/$defs/container_options" },
+        { "$ref": "#/$defs/alignment_and_variant_calling_options" },
+        { "$ref": "#/$defs/generic_options" }
+    ]
+}

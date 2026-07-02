@@ -7,6 +7,7 @@ SRA Alignment Pipeline
 - [Output Data](#output-data)
 - [Pipeline Overview](#pipeline-overview)
 - [Usage](#usage)
+  - [Parameter Validation](#parameter-validation)
   - [Usage Examples](#usage-examples)
   - [Test the Pipeline](#test-the-pipeline)
   - [Post-Run Cleanup and Archiving](#post-run-cleanup-and-archiving)
@@ -24,10 +25,10 @@ SRA Alignment Pipeline
 
 ## Installation
 **Important:** Before you can use this pipeline, you need to install Nextflow and a supported container engine.
-- Nextflow can be installed by following the instructions [here](https://www.nextflow.io/docs/latest/getstarted.html). 
+- Nextflow (**version 25.04.8 or newer**, required by the `nf-schema` plugin used for parameter validation) can be installed by following the instructions [here](https://www.nextflow.io/docs/latest/getstarted.html). 
 - Docker can be installed by following the instructions [here](https://docs.docker.com/get-docker/). 
 - The pipeline selects its container/environment engine with `-profile` (Docker, Singularity, Apptainer, Podman, or experimental Conda). On HPC/cluster environments where the Docker daemon is not permitted, use `-profile singularity` or `-profile apptainer` (both pull the existing Docker images directly). See [Execution Profiles](#execution-profiles) for details.
-- This pipeline now resolves its runtime images from a tracked image manifest and has been modernized for current multi-architecture Docker builds. Local validation in this repository was performed with Nextflow 22.10.7 and Docker 29.x on arm64, and CI currently exercises Nextflow 23.04.0 on Ubuntu.
+- This pipeline resolves its runtime images from a tracked image manifest and has been modernized for current multi-architecture Docker builds. Parameters are validated declaratively via the `nf-schema` plugin (see [Parameter Validation](#parameter-validation)), which requires Nextflow 25.04 or newer. CI pins and exercises Nextflow 25.04.8 with Docker 29.x on Ubuntu.
 
 ## Input Data
 
@@ -138,6 +139,16 @@ OPTIONS:
 ```
 
 > **Tip:** The `-resume` flag tells Nextflow to reuse cached results from previous runs, skipping completed tasks. This is especially useful when a run fails partway through — re-running with `-resume` picks up where it left off.
+
+### Parameter Validation
+
+Pipeline parameters are validated declaratively using the [`nf-schema`](https://nextflow-io.github.io/nf-schema/) plugin, driven by `nextflow_schema.json`. On every run the pipeline:
+
+- checks each parameter's type and that required parameters are supplied (`--email` is required), reporting a clear error for invalid values (for example, a non-integer `--cpus`);
+- reports any unrecognized `--parameter`;
+- generates the `--help` output directly from the schema, so `nextflow run main.nf --help` always lists the current parameters with their types, defaults, and descriptions.
+
+One cross-field rule that a JSON schema cannot express is enforced in `main.nf`: you must provide **either** `--input_file` **or** both `--sra_accession` and `--identifier`.
 
 ## Usage Examples
 ### **Option #1: Run from Github**
