@@ -16,7 +16,7 @@ process download_fasta {
     script:
     """
     echo "Downloading fasta file for ${identifierVal}"
-    python /scripts/download_fasta.py ${identifierVal} ${emailval}
+    download_fasta.py ${identifierVal} ${emailval}
     """
 
     stub:

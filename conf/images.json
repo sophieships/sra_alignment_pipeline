@@ -41,20 +41,8 @@
       }
     },
     "biopython": {
-      "runtime_name": "biopython-pysam",
-      "version": "1.86-pysam0.23.3",
-      "registry": "docker.io",
-      "namespace": "eoksen",
-      "build": {
-        "enabled": true,
-        "dockerfile": "dockerfiles/multiarch/biopython/Dockerfile",
-        "context": "dockerfiles/multiarch/biopython",
-        "args": {
-          "PYTHON_IMAGE": "python:3.13-slim-bookworm",
-          "BIOPYTHON_VERSION": "1.86",
-          "PYSAM_VERSION": "0.23.3"
-        }
-      }
+      "runtime_name": "mulled-v2-3a59640f3fe1ed11819984087d31d68600200c3f",
+      "version": "185a25ca79923df85b58f42deb48f5ac4481e91f-0"
     },
     "bowtie2": {
       "runtime_name": "bowtie2",
