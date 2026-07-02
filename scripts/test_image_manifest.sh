@@ -85,10 +85,10 @@ expect_output_equals \
     "${expected_targets}" \
     scripts/build_images.sh --list-targets
 expect_output_equals \
-    "docker.io" \
+    "quay.io" \
     python3 scripts/image_manifest.py default-value --config conf/images.json --field registry
 expect_output_equals \
-    "eoksen" \
+    "biocontainers" \
     python3 scripts/image_manifest.py default-value --config conf/images.json --field namespace
 expect_output_equals \
     "linux/amd64,linux/arm64" \
@@ -114,7 +114,7 @@ fi
 
 fastp_target_rows="$(python3 scripts/image_manifest.py build-target-rows --config conf/images.json --targets fastp)"
 expect_output_contains \
-    $'fastp\tfastp\t1.3.0\tdockerfiles/multiarch/fastp/Dockerfile\tdockerfiles/multiarch/fastp\t{"FASTP_VERSION":"v1.3.0","LIBISAL_VERSION":"v2.31.1","LIBDEFLATE_VERSION":"v1.25"}' \
+    $'fastp\tfastp\t1.3.0--h43da1c4_0\tdockerfiles/multiarch/fastp/Dockerfile\tdockerfiles/multiarch/fastp\t{"FASTP_VERSION":"v1.3.0","LIBISAL_VERSION":"v2.31.1","LIBDEFLATE_VERSION":"v1.25"}' \
     python3 scripts/image_manifest.py build-target-rows --config conf/images.json --targets fastp
 if [[ "${fastp_target_rows}" != *$'fastp\tfastp\t1.3.0'* ]]; then
     echo "Expected target row output to contain fastp row, got: ${fastp_target_rows}" >&2
