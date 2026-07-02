@@ -64,7 +64,7 @@ jobs:
 
           missing_required_image="$(mktemp)"
           cat > "${missing_required_image}" <<'JSON'
-          {"defaults":{"registry":"docker.io","namespace":"eoksen"},"images":{"aria2":{"runtime_name":"aria2-sra-download","version":"1.37.0","build":{"enabled":true,"dockerfile":"dockerfiles/multiarch/aria2/Dockerfile","context":"dockerfiles/multiarch/aria2"}}}}
+          {"defaults":{"registry":"quay.io","namespace":"biocontainers"},"images":{"aria2":{"runtime_name":"aria2","version":"1.36.0","build":{"enabled":true,"dockerfile":"dockerfiles/multiarch/aria2/Dockerfile","context":"dockerfiles/multiarch/aria2"}}}}
           JSON
           if nextflow_output="$(nextflow run main.nf --help --image_manifest "${missing_required_image}" -ansi-log false 2>&1)"; then
             echo "Expected missing required image manifest check to fail." >&2
@@ -100,7 +100,7 @@ jobs:
             -stub-run \
             -ansi-log false
 
-          expected_ref="docker.io/eoksen/fastp:1.3.0"
+          expected_ref="quay.io/biocontainers/fastp:1.3.0--h43da1c4_0"
           if ! grep -R --fixed-strings --quiet "${expected_ref}" work/*/*/.command.run; then
             echo "Expected stub-run task wrapper to contain manifest-derived container ref: ${expected_ref}" >&2
             exit 1
