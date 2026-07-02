@@ -25,9 +25,17 @@ process run_bcftools {
     # Generate the consensus sequence
     zcat ${reference_fasta_gz} | bcftools consensus ${sorted_bam.simpleName}_calls.vcf.gz > ${sorted_bam.simpleName}_consensus.fasta
 
-    # Calculate statistics and generate svg plots
+    # Calculate statistics and generate svg plots.
+    # plot-vcfstats renders its graphs with python3 + matplotlib, which the stock
+    # bcftools biocontainer does not ship (bioconda's bcftools has no python).
+    # Treat plotting as best-effort so the pipeline stays green on stock
+    # biocontainers: the VCF stats themselves are still produced here and are
+    # aggregated by MultiQC. A from-source bcftools image with matplotlib (see
+    # dockerfiles/multiarch/bcftools) renders the full plot set.
     bcftools stats ${sorted_bam.simpleName}_calls.vcf.gz > ${sorted_bam.simpleName}_calls.vcf.gz.stats
-    plot-vcfstats -v -p ${sorted_bam.simpleName}_stats_plots ${sorted_bam.simpleName}_calls.vcf.gz.stats
+    plot-vcfstats -v -p ${sorted_bam.simpleName}_stats_plots ${sorted_bam.simpleName}_calls.vcf.gz.stats \\
+        || echo "plot-vcfstats skipped: no matplotlib in the runtime image" >&2
+    mkdir -p ${sorted_bam.simpleName}_stats_plots
     """
 
     stub:

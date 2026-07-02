@@ -22,7 +22,9 @@ process run_bcftools_filter {
         mkdir -p filtered_stats_files/excluded
         bcftools stats excluded_filtered.vcf.gz > filtered_stats_files/excluded/excluded.vcf.gz.stats
         mkdir -p filtered_stats_plots/excluded
-        plot-vcfstats -p filtered_stats_plots/excluded/ filtered_stats_files/excluded/excluded.vcf.gz.stats
+        # Best-effort: the stock bcftools biocontainer has no matplotlib for plot-vcfstats.
+        plot-vcfstats -p filtered_stats_plots/excluded/ filtered_stats_files/excluded/excluded.vcf.gz.stats \\
+            || echo "plot-vcfstats skipped: no matplotlib in the runtime image" >&2
     fi
     # Filter the variants based on user provided inclusion criteria and then generate stats and plots for the filtered vcfs
     if [[ '${params.include}' != '' ]]; then
@@ -31,7 +33,9 @@ process run_bcftools_filter {
         mkdir -p filtered_stats_files/included
         bcftools stats included_filtered.vcf.gz > filtered_stats_files/included/included.vcf.gz.stats
         mkdir -p filtered_stats_plots/included
-        plot-vcfstats -p filtered_stats_plots/included/ filtered_stats_files/included/included.vcf.gz.stats
+        # Best-effort: the stock bcftools biocontainer has no matplotlib for plot-vcfstats.
+        plot-vcfstats -p filtered_stats_plots/included/ filtered_stats_files/included/included.vcf.gz.stats \\
+            || echo "plot-vcfstats skipped: no matplotlib in the runtime image" >&2
     fi
     """
 
