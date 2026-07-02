@@ -1,6 +1,11 @@
 import groovy.json.JsonException
 import groovy.json.JsonSlurper
 
+// nf-schema drives declarative parameter validation and schema-generated --help
+// from nextflow_schema.json. This replaces the former hand-rolled
+// `if (params.x == '') error(...)` cascade. See nextflow.config for the plugin pin.
+include { validateParameters; paramsHelp } from 'plugin/nf-schema'
+
 final List REQUIRED_RUNTIME_IMAGE_KEYS = [
     'aria2',
     'bcftools',
@@ -108,77 +113,35 @@ def resolvedContainerImages = buildContainerImageMap(
     resolvedContainerNamespace
 )
 
+// Schema-generated help (params, types, defaults, and descriptions all come
+// from nextflow_schema.json). Note: -profile is a Nextflow core option, not a
+// pipeline param, so it is documented in README.md rather than the schema.
 if (params.help) {
-    log.info """
-    ======================
-    SRA Alignment Pipeline
-    ======================
-
-    Usage:
-      nextflow run main.nf -profile docker [OPTIONS]
-      nextflow run https://github.com/sophieships/sra_alignment_pipeline -r main -profile docker [OPTIONS]
-
-    Execution profile (required to run processes; choose ONE engine):
-      -profile docker           Run processes with Docker (default documented engine)
-      -profile singularity      Run processes with Singularity (HPC; autoMounts enabled)
-      -profile apptainer        Run processes with Apptainer (HPC; autoMounts enabled)
-      -profile conda            EXPERIMENTAL, pending biocontainers migration (issue #32)
-      -profile podman           Run processes with Podman
-
-    Required:
-      --email <address>         NCBI-registered email address
-      --cpus <int>              Upper cap on per-process CPUs (default: 2). Per-process
-                                requests come from resource labels; --cpus caps them
-                                (e.g. --cpus 1 forces every task to a single core).
-
-    Input (one required):
-      --sra_accession <id>      SRA accession number (requires --identifier)
-      --identifier <id>         NCBI nucleotide identifier for reference genome
-      --input_file <path>       CSV with columns: sra_accession, identifier
-
-    Optional:
-      --outdir <path>           Directory for all published outputs and execution
-                                reports (default: results)
-      --max_cpus <int>          Cap on CPUs any single process may request (default: 8)
-      --max_memory <str>        Cap on memory any single process may request (default: 16.GB)
-      --max_time <str>          Cap on wall time any single process may request (default: 24.h)
-      --image_manifest <path>   Path to the tracked container image manifest
-      --container_registry <r>  Override the container registry from the manifest
-      --container_namespace <n> Override the container namespace from the manifest
-      --L <int>                 Bowtie2 seed length (default: 22)
-      --X <int>                 Bowtie2 max insert size (default: 600)
-      --ploidy <int>            Ploidy for variant calling (default: 1)
-      --include <expr>          bcftools filter inclusion expression
-      --exclude <expr>          bcftools filter exclusion expression
-      --help                    Show this help message
-    """.stripIndent()
+    log.info paramsHelp(command: "nextflow run main.nf -profile docker --input_file <csv> --email <ncbi-email>")
     exit 0
 }
 
-// If no SRA accession number, identifier, or input file is provided, throw an error.
-if ( params.sra_accession == '' && params.identifier == '' && params.input_file == '' ) {
-    error "You must provide either an SRA accession number and identifier with --sra_accession and --identifier, or an input file with --input_file"
+// Declarative parameter validation against nextflow_schema.json. This enforces
+// the checks that were previously hand-rolled: --email is required, --cpus (and
+// the other integer params) must be integers, and any unrecognized param is
+// reported. Replaces the former `if (params.x == '') error(...)` cascade.
+validateParameters()
+
+// Residual cross-field check that a JSON schema cannot express: the pipeline
+// needs EITHER --input_file OR (--sra_accession AND --identifier). nf-schema
+// validates each param independently but not this XOR-style dependency across
+// three params, so it stays as explicit Groovy. (This single condition covers
+// both "nothing provided" and "only one of accession/identifier provided".)
+if ( params.input_file == '' && ( params.sra_accession == '' || params.identifier == '' ) ) {
+    error("You must provide either an SRA accession number and identifier (--sra_accession and --identifier), or an input file (--input_file).")
 }
 
-// If only one of the SRA accession or identifier is provided without an input file, throw an error.
-if (( params.sra_accession == '' || params.identifier == '' ) && params.input_file == '' ) {
-    error("You have only provided one of the SRA accession or identifier. Both or an input file must be provided. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email> \nOr provide an input file: nextflow run main.nf --input_file <file> --cpus <cpus> --email <email>")
-}
-
-// If both an input file and individual SRA accession and/or identifier are provided, log a warning that only the input file will be used.
-if ( params.input_file != '' && ( params.sra_accession != '' || params.identifier != '' )) {
+// If both an input file and an individual SRA accession/identifier are given,
+// only the input file is used.
+if ( params.input_file != '' && ( params.sra_accession != '' || params.identifier != '' ) ) {
     log.warn("Both an input file and individual SRA accession and/or identifier are provided. Only the input file will be used for the pipeline.")
 }
 
-// If no email is provided, throw an error. 
-if ( params.email == '' ) {
-    error("No email provided. Specify it with --email. \nCorrect usage: nextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email>")
-}
-
-// If the provided CPU number is not a number, throw an error.
-if ( !params.cpus.toString().isNumber() ) {
-    error("Invalid CPU number provided. Specify it with --cpus <int>. It should be an integer. \nTo check the number of CPUs on your system: \n- Unix-based (Linux/MacOS/WSL2): use the 'nproc' command \n- To adjust system cpu and memory allocation for Docker, go to Docker Desktop, then settings/resources and set cpu and memory parameters. \nnextflow run main.nf --sra_accession <accession> --identifier <identifier> --cpus <cpus> --email <email>")
-}
 log.info("Using container images from ${resolvedContainerRegistry}/${resolvedContainerNamespace}")
 
 include { get_srrs } from './nf_scripts/get_srrs' addParams(container_image: resolvedContainerImages['sra_parser'])
