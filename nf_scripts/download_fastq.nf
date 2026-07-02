@@ -17,7 +17,7 @@ process download_fastq {
 
     script:
     """
-    /scripts/sra_download.sh ${sra_accession}
+    sra_download.sh ${sra_accession}
     """
 
     // Read-path choice (see PR): emit ONLY the gz reads and DO NOT create

@@ -12,7 +12,7 @@ process parse_srrs {
 
     script:
     """
-    python /scripts/sra_parser.py ${input_file} > ${input_file}_srr_list.csv
+    sra_parser.py ${input_file} > ${input_file}_srr_list.csv
     """
 
     stub:

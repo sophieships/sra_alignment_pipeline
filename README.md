@@ -94,7 +94,7 @@ Processes run inside containers, and you must select a container/environment eng
 | `docker` | Docker | Default documented engine. |
 | `singularity` | Singularity | For HPC/clusters where Docker is not permitted. `autoMounts` enabled. Pulls the existing Docker images directly. |
 | `apptainer` | Apptainer | Apptainer (the successor to Singularity). `autoMounts` enabled. Pulls the existing Docker images directly. |
-| `conda` | Conda | **Experimental** — scaffold only, pending the biocontainers migration ([issue #32](https://github.com/sophieships/sra_alignment_pipeline/issues/32)). Current runtime images are custom Docker images that do not translate to Conda, so this profile is not yet usable. |
+| `conda` | Conda | **Experimental** — scaffold only. Runtime images are now bioconda-derived biocontainers, but the pipeline does not yet declare a per-process `conda` environment, so this profile is not wired up for real runs. Use `docker`/`singularity`/`apptainer`. |
 | `podman` | Podman | Optional Docker-compatible daemonless engine. |
 
 Add the profile flag to any `nextflow run` command, e.g. `-profile docker` or `-profile singularity`.
@@ -254,9 +254,19 @@ nextflow run main.nf -profile docker --input_file <path/to/input/file.csv> --cpu
 
 ## Reproducibility and Docker Images
 
-To ensure that the results of this pipeline can be reliably reproduced, we run all processes for this pipeline in Docker containers with versioned software. The image names, tags, Dockerfiles, and default registry/namespace are tracked centrally in `conf/images.json`. By default the pipeline resolves runtime images from `docker.io/eoksen`, but you can override that at runtime with `--container_registry` and `--container_namespace`.
+To ensure that the results of this pipeline can be reliably reproduced, we run every process in a versioned container. By default the pipeline resolves its runtime images from **[biocontainers](https://biocontainers.pro/)** on `quay.io/biocontainers` — public, permanent, versioned images that are auto-generated from bioconda recipes and are not tied to any personal registry account. The image names, tags, and default registry/namespace are tracked centrally in `conf/images.json`. You can override the default registry/namespace at runtime with `--container_registry` and `--container_namespace` (for example to point at your own rebuilt images).
 
-If you want to build those images yourself, use the Dockerfiles and helper scripts in the `dockerfiles` and `scripts` directories. The `scripts/build_images.sh` script is for build-time workflows and uses the same manifest as build metadata. It will:
+Most tools (fastp, bowtie2, samtools, bcftools, qualimap, sra-tools, pigz) map directly to a single-package biocontainer. Three steps previously used custom Python/shell images; they now run their scripts from the pipeline's top-level `bin/` directory (Nextflow auto-stages `bin/` onto every task's `PATH`) under stock biocontainers:
+
+- `sra_parser.py` (SRR resolution) uses only `requests` + the Python standard library and runs under `quay.io/biocontainers/requests`.
+- `download_fasta.py` (reference download + BGZF compression) runs under the biopython + pysam mulled biocontainer.
+- `sra_download.sh` (ENA FASTQ download) runs under `quay.io/biocontainers/aria2`.
+
+Biocontainers are published for `linux/amd64`; on other host architectures (e.g. Apple Silicon) they run under your container engine's emulation.
+
+### Building images from source (optional)
+
+The seven single-package tools still ship a Dockerfile so you can rebuild them from source if you need to. Use the Dockerfiles and helper scripts in the `dockerfiles` and `scripts` directories. The `scripts/build_images.sh` script is for build-time workflows and uses the same manifest as build metadata. For each image, `version` is the tag used both for runtime resolution and for a local rebuild's output, while `build.args` pin the source version that is compiled. To run a rebuilt image, build/push it to your own namespace and select it at runtime with `--container_registry`/`--container_namespace`. The script will:
 
 - Build a selected subset of tracked image targets or all of them.
 - Default to a local single-architecture build so it does not accidentally push to a personal registry.
@@ -282,10 +292,9 @@ The `conf/images.json` manifest is the source of truth for container resolution.
 - `defaults.registry` and `defaults.namespace`: default registry/namespace used by the pipeline and build script.
 - `defaults.publish_platforms` and `defaults.host_platform_map`: default platforms for publish builds and host-local builds.
 - `images.<key>.runtime_name` and `images.<key>.version`: the runtime image reference parts used by Nextflow.
-- `images.<key>.build.enabled`: whether the image appears in `scripts/build_images.sh --list-targets` and can be selected for builds.
-- `images.<key>.build.dockerfile`, `images.<key>.build.context`, and `images.<key>.build.args`: the Docker build inputs used by `scripts/build_images.sh`.
+- `images.<key>.build` (optional): present only for images you can rebuild from source. Runtime-only images (stock biocontainers pulled at runtime) omit it. When present, `build.enabled` controls whether the image appears in `scripts/build_images.sh --list-targets`, and `build.dockerfile`, `build.context`, and `build.args` are the Docker build inputs used by `scripts/build_images.sh`.
 
-The current required runtime image keys are `aria2`, `bcftools`, `biopython`, `bowtie2`, `fastp`, `pigz`, `qualimap`, `samtools`, `sra_parser`, and `sra_tools`.
+The current required runtime image keys are `aria2`, `bcftools`, `biopython`, `bowtie2`, `fastp`, `pigz`, `qualimap`, `samtools`, `sra_parser`, and `sra_tools`. Of these, `aria2`, `biopython`, and `sra_parser` are runtime-only (stock biocontainers, no `build` block); the rest are buildable from source.
 
 To inspect the currently tracked runtime/build targets without duplicating the manifest contents in documentation, use:
 ```bash
@@ -293,7 +302,7 @@ python3 scripts/image_manifest.py list-targets --config conf/images.json
 python3 scripts/image_manifest.py build-targets --config conf/images.json --targets fastp
 ```
 
-When you build with `--cache-mode registry`, BuildKit cache layers should be treated as implementation detail rather than runtime dependencies. By default they now publish as tags under the single cache repository `docker.io/<namespace>/sra-alignment-cache`, which keeps the public runtime namespace easier to scan while preserving remote cache reuse.
+When you build with `--cache-mode registry`, BuildKit cache layers should be treated as implementation detail rather than runtime dependencies. By default they publish as tags under the single cache repository `<registry>/<namespace>/sra-alignment-cache` (from the manifest defaults, or your `--registry`/`--namespace` overrides), which keeps the runtime namespace easier to scan while preserving remote cache reuse. Because the manifest defaults now point at `quay.io/biocontainers` (which you cannot push to), pass `--registry`/`--namespace` — or an explicit `--cache-ref` — when using registry cache for your own rebuilds.
 
 The `--changed-since <ref>` option compares the current worktree against the supplied git ref and includes a target when its Dockerfile or Docker build context has changed. If the manifest file itself changed, the helper includes all selected targets. The comparison also considers current uncommitted tracked changes and untracked files, so the result reflects the live worktree rather than only committed differences.
 

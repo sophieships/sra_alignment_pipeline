@@ -1,8 +1,8 @@
 process run_multiqc {
     label 'process_low'
-    // Pinned biocontainer (not a custom eoksen image) to keep this PR focused and
-    // off the manifest-validation logic; issue #32 can consolidate it into the
-    // manifest later. Tag confirmed pullable via `docker manifest inspect`.
+    // Pinned biocontainer. MultiQC resolves its own image here rather than through
+    // conf/images.json (whose images are also biocontainers); it could be folded
+    // into the manifest later. Tag confirmed pullable via `docker manifest inspect`.
     container 'quay.io/biocontainers/multiqc:1.25--pyhdfd78af_0'
 
     publishDir "${params.outdir}/multiqc", mode: 'copy'

@@ -261,10 +261,15 @@ def build_targets(
 ) -> list[dict]:
     """Return the enabled manifest targets, optionally filtered by selection or git changes."""
     images = require_image_map(manifest, config_file)
-    validated_images = {
-        name: validate_target_definition(name, image_definition, config_file)
-        for name, image_definition in images.items()
-    }
+    validated_images = {}
+    for name, image_definition in images.items():
+        # Runtime-only images (e.g. stock biocontainers pulled at runtime) carry no
+        # `build` block: they are never built here, so skip them for build-target
+        # selection. Entries that DO declare a `build` block are still fully
+        # validated below.
+        if isinstance(image_definition, dict) and "build" not in image_definition:
+            continue
+        validated_images[name] = validate_target_definition(name, image_definition, config_file)
     available_targets = {
         name: image
         for name, image in validated_images.items()

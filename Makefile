@@ -46,7 +46,7 @@ manifest-validation:
 	[[ "$$nextflow_output" == *"defaults must be an object"* ]] || { echo "$$nextflow_output"; rm -f "$$missing_defaults"; exit 1; }; \
 	rm -f "$$missing_defaults"
 	@missing_required_image="$$(mktemp)" && \
-	printf '%s\n' '{"defaults":{"registry":"docker.io","namespace":"eoksen"},"images":{"aria2":{"runtime_name":"aria2-sra-download","version":"1.37.0","build":{"enabled":true,"dockerfile":"dockerfiles/multiarch/aria2/Dockerfile","context":"dockerfiles/multiarch/aria2"}}}}' > "$$missing_required_image" && \
+	printf '%s\n' '{"defaults":{"registry":"quay.io","namespace":"biocontainers"},"images":{"aria2":{"runtime_name":"aria2","version":"1.36.0","build":{"enabled":true,"dockerfile":"dockerfiles/multiarch/aria2/Dockerfile","context":"dockerfiles/multiarch/aria2"}}}}' > "$$missing_required_image" && \
 	if nextflow_output="$$(nextflow run main.nf --help --image_manifest "$$missing_required_image" -ansi-log false 2>&1)"; then \
 		echo "Expected missing required image manifest check to fail." >&2; \
 		rm -f "$$missing_required_image"; \
@@ -61,7 +61,7 @@ manifest-validation:
 
 manifest-stub: clean-ci-artifacts
 	nextflow run main.nf --input_file test_data/phage_smoke.csv --cpus 1 --email test@example.com -profile docker -stub-run -ansi-log false
-	grep -R --fixed-strings --quiet "docker.io/eoksen/fastp:1.3.0" work/*/*/.command.run
+	grep -R --fixed-strings --quiet "quay.io/biocontainers/fastp:1.3.0--h43da1c4_0" work/*/*/.command.run
 
 image-manifest-tests:
 	bash scripts/test_image_manifest.sh

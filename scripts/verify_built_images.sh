@@ -44,27 +44,34 @@ verify_target() {
 
     runtime_name="$(manifest_field runtime_name "${target}")"
     version="$(manifest_field version "${target}")"
-    image_ref="docker.io/eoksen/${runtime_name}:${version}"
+
+    # Resolve the built image reference from the manifest defaults (matches what
+    # scripts/build_images.sh tags), not a hardcoded personal namespace.
+    local registry namespace
+    registry="$(python3 "${SCRIPT_DIR}/image_manifest.py" default-value --config "${CONFIG_PATH}" --field registry)"
+    namespace="$(python3 "${SCRIPT_DIR}/image_manifest.py" default-value --config "${CONFIG_PATH}" --field namespace)"
+    image_ref="${registry}/${namespace}/${runtime_name}:${version}"
+
+    # The manifest `version` is the biocontainer tag (e.g. 1.23.1--hb2cee57_0);
+    # the tool's own --version reports just the upstream version compiled from the
+    # build args, so strip the biocontainer build suffix for the expected text.
+    local expected_version="${version%%--*}"
 
     case "${target}" in
-        aria2)
-            version_command='aria2c --version | head -n1'
-            expected_text="aria2 version ${version}"
-            ;;
         bcftools)
             version_command='bcftools --version | head -n1'
-            expected_text="bcftools ${version}"
+            expected_text="bcftools ${expected_version}"
             ;;
         fastp)
             version_command='fastp --version'
-            expected_text="fastp ${version}"
+            expected_text="fastp ${expected_version}"
             ;;
         samtools)
             version_command='samtools --version | head -n1'
-            expected_text="samtools ${version}"
+            expected_text="samtools ${expected_version}"
             ;;
         *)
-            echo "Unsupported verification target: ${target}" >&2
+            echo "Unsupported verification target: ${target} (only from-source buildable tools are supported: bcftools, fastp, samtools)" >&2
             exit 1
             ;;
     esac
