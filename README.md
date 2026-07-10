@@ -30,6 +30,8 @@ SRA Alignment Pipeline
 - The pipeline selects its container/environment engine with `-profile` (Docker, Singularity, Apptainer, Podman, or experimental Conda). On HPC/cluster environments where the Docker daemon is not permitted, use `-profile singularity` or `-profile apptainer` (both pull the existing Docker images directly). See [Execution Profiles](#execution-profiles) for details.
 - This pipeline resolves its runtime images from a tracked image manifest and has been modernized for current multi-architecture Docker builds. Parameters are validated declaratively via the `nf-schema` plugin (see [Parameter Validation](#parameter-validation)), which requires Nextflow 25.04 or newer. CI pins and exercises Nextflow 25.04.8 with Docker 29.x on Ubuntu.
 
+The repository's `make` targets call the `nextflow` executable installed in your current environment; they do not download the CI-pinned version. Before running `make ci`, confirm that `nextflow -version` reports Nextflow 25.04 or newer. Older versions stop immediately with the pipeline's minimum-version requirement instead of attempting plugin resolution.
+
 ## Input Data
 
 The pipeline accepts input data in two ways:

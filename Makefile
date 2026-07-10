@@ -1,10 +1,11 @@
 SHELL := /bin/bash
 
-.PHONY: help ci pipeline-check manifest-validation manifest-stub image-manifest-tests build-images-tests clean-ci-artifacts
+.PHONY: help ci nextflow-version-check pipeline-check manifest-validation manifest-stub image-manifest-tests build-images-tests clean-ci-artifacts
 
 help:
 	@echo "Local CI targets:"
 	@echo "  make ci                   Run the local equivalent of GitHub Actions CI"
+	@echo "  make nextflow-version-check Verify the minimum Nextflow version constraint"
 	@echo "  make pipeline-check       Verify Nextflow parses and --help works"
 	@echo "  make manifest-validation  Exercise manifest validation failures"
 	@echo "  make manifest-stub        Verify manifest-derived refs in a stub run"
@@ -12,7 +13,13 @@ help:
 	@echo "  make build-images-tests   Run build_images orchestration checks"
 	@echo "  make clean-ci-artifacts   Remove local Nextflow CI artifacts"
 
-ci: pipeline-check manifest-validation manifest-stub image-manifest-tests build-images-tests
+ci: nextflow-version-check pipeline-check manifest-validation manifest-stub image-manifest-tests build-images-tests
+
+nextflow-version-check:
+	@grep -Eq "^[[:space:]]*nextflowVersion[[:space:]]*=[[:space:]]*['\"]!>=25\\.04\\.0['\"]" nextflow.config || { \
+		echo "nextflow.config must require Nextflow >=25.04.0 via manifest.nextflowVersion" >&2; \
+		exit 1; \
+	}
 
 pipeline-check:
 	nextflow run main.nf --help -profile docker -ansi-log false
