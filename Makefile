@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help ci nextflow-version-check pipeline-check manifest-validation manifest-stub image-manifest-tests build-images-tests clean-ci-artifacts
+.PHONY: help ci nextflow-version-check pipeline-check manifest-validation manifest-stub reference-cache-tests image-manifest-tests build-images-tests clean-ci-artifacts
 
 help:
 	@echo "Local CI targets:"
@@ -9,11 +9,12 @@ help:
 	@echo "  make pipeline-check       Verify Nextflow parses and --help works"
 	@echo "  make manifest-validation  Exercise manifest validation failures"
 	@echo "  make manifest-stub        Verify manifest-derived refs in a stub run"
+	@echo "  make reference-cache-tests Verify reference reuse across output directories"
 	@echo "  make image-manifest-tests Run Python manifest regression checks"
 	@echo "  make build-images-tests   Run build_images orchestration checks"
 	@echo "  make clean-ci-artifacts   Remove local Nextflow CI artifacts"
 
-ci: nextflow-version-check pipeline-check manifest-validation manifest-stub image-manifest-tests build-images-tests
+ci: nextflow-version-check pipeline-check manifest-validation manifest-stub reference-cache-tests image-manifest-tests build-images-tests
 
 nextflow-version-check:
 	@grep -Eq "^[[:space:]]*nextflowVersion[[:space:]]*=[[:space:]]*['\"]!>=25\\.04\\.0['\"]" nextflow.config || { \
@@ -69,6 +70,9 @@ manifest-validation:
 manifest-stub: clean-ci-artifacts
 	nextflow run main.nf --input_file test_data/phage_smoke.csv --cpus 1 --email test@example.com -profile docker -stub-run -ansi-log false
 	grep -R --fixed-strings --quiet "quay.io/biocontainers/fastp:1.3.0--h43da1c4_0" work/*/*/.command.run
+
+reference-cache-tests:
+	bash scripts/test_reference_cache.sh
 
 image-manifest-tests:
 	bash scripts/test_image_manifest.sh

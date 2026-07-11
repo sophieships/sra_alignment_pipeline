@@ -127,6 +127,14 @@ if (params.help) {
 // reported. Replaces the former `if (params.x == '') error(...)` cascade.
 validateParameters()
 
+// Resolve this default after command-line parameters have been applied so that
+// `--outdir custom-results` implies `custom-results/reference_genomes`. An
+// explicit --reference_cache remains independent of --outdir and can therefore
+// be reused by otherwise isolated runs.
+if (!params.reference_cache?.toString()?.trim()) {
+    params.reference_cache = "${params.outdir}/reference_genomes"
+}
+
 // Residual cross-field check that a JSON schema cannot express: the pipeline
 // needs EITHER --input_file OR (--sra_accession AND --identifier). nf-schema
 // validates each param independently but not this XOR-style dependency across
@@ -143,6 +151,7 @@ if ( params.input_file != '' && ( params.sra_accession != '' || params.identifie
 }
 
 log.info("Using container images from ${resolvedContainerRegistry}/${resolvedContainerNamespace}")
+log.info("Using reference genome cache at ${params.reference_cache}")
 
 include { get_srrs } from './nf_scripts/get_srrs' addParams(container_image: resolvedContainerImages['sra_parser'])
 include { parse_srrs } from './nf_scripts/parse_srrs' addParams(container_image: resolvedContainerImages['sra_parser'])

@@ -113,6 +113,8 @@ OPTIONS:
 
 --outdir <path> Directory for all published outputs and execution reports, default: `results`. Every `publishDir` output and the report/timeline/trace files are written under this directory, so runs can be kept separate.
 
+--reference_cache <path> Directory used to cache downloaded reference genomes, default: `<outdir>/reference_genomes`. Set this to a shared path to reuse the same reference download across runs with different `--outdir` values.
+
 --max_cpus <int> Maximum CPUs any single process may request, default: 8.
 
 --max_memory <str> Maximum memory any single process may request, default: `16.GB`.
@@ -141,6 +143,20 @@ OPTIONS:
 ```
 
 > **Tip:** The `-resume` flag tells Nextflow to reuse cached results from previous runs, skipping completed tasks. This is especially useful when a run fails partway through — re-running with `-resume` picks up where it left off.
+
+### Reusing Reference Genomes Across Runs
+
+By default, downloaded reference genomes are cached in `<outdir>/reference_genomes`, preserving the pipeline's existing self-contained output layout. To share references across runs that use different output directories, pass the same `--reference_cache` path to each run:
+
+```bash
+nextflow run main.nf -profile docker --input_file samples-a.csv --email <ncbi-email-address> \
+    --outdir results/run-a --reference_cache /data/sra-reference-cache
+
+nextflow run main.nf -profile docker --input_file samples-b.csv --email <ncbi-email-address> \
+    --outdir results/run-b --reference_cache /data/sra-reference-cache
+```
+
+When both runs request the same NCBI identifier, the second run reuses the cached FASTA instead of downloading it again. The shared cache is intentionally outside either output directory, so removing or archiving one run does not remove the cached reference.
 
 ### Parameter Validation
 

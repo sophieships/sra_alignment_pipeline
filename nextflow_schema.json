@@ -60,6 +60,11 @@
                     "default": "results",
                     "description": "Directory for all published outputs and execution reports (default: results).",
                     "help_text": "Every publishDir output plus the report/timeline/trace files are written under this directory, so runs can be kept separate."
+                },
+                "reference_cache": {
+                    "type": "string",
+                    "description": "Directory used to cache downloaded reference genomes (default: <outdir>/reference_genomes).",
+                    "help_text": "Defaults to <outdir>/reference_genomes. Set this to a shared path to reuse reference downloads across runs with different --outdir values."
                 }
             }
         },

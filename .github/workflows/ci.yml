@@ -106,6 +106,9 @@ jobs:
             exit 1
           fi
 
+      - name: Verify shared reference cache reuse
+        run: bash scripts/test_reference_cache.sh
+
       - name: Run image manifest regression checks
         run: scripts/test_image_manifest.sh
 
