@@ -3,7 +3,7 @@ process download_fasta {
     maxForks 1
     container "${params.container_image}"
 
-    storeDir "${params.outdir}/reference_genomes"
+    storeDir params.reference_cache
 
     input:
     val sra_accession
