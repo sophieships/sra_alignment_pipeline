@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+accession="$1"
+printf 'fasterq-dump %s\n' "$*" >> "${FALLBACK_TOOL_LOG:?}"
+printf '@read/1\nACGT\n+\nIIII\n' > "${accession}_1.fastq"
+if [[ "${FASTERQ_TEST_MODE:-paired}" == paired ]]; then
+    printf '@read/2\nTGCA\n+\nIIII\n' > "${accession}_2.fastq"
+fi

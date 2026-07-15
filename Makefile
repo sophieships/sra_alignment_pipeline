@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help ci nextflow-version-check pipeline-check manifest-validation manifest-stub reference-cache-tests image-manifest-tests build-images-tests clean-ci-artifacts
+.PHONY: help ci nextflow-version-check pipeline-check manifest-validation manifest-stub reference-cache-tests download-fallback-tests image-manifest-tests build-images-tests clean-ci-artifacts
 
 help:
 	@echo "Local CI targets:"
@@ -10,11 +10,12 @@ help:
 	@echo "  make manifest-validation  Exercise manifest validation failures"
 	@echo "  make manifest-stub        Verify manifest-derived refs in a stub run"
 	@echo "  make reference-cache-tests Verify reference reuse across output directories"
+	@echo "  make download-fallback-tests Verify paired ENA downloads and SRA fallback routing"
 	@echo "  make image-manifest-tests Run Python manifest regression checks"
 	@echo "  make build-images-tests   Run build_images orchestration checks"
 	@echo "  make clean-ci-artifacts   Remove local Nextflow CI artifacts"
 
-ci: nextflow-version-check pipeline-check manifest-validation manifest-stub reference-cache-tests image-manifest-tests build-images-tests
+ci: nextflow-version-check pipeline-check manifest-validation manifest-stub reference-cache-tests download-fallback-tests image-manifest-tests build-images-tests
 
 nextflow-version-check:
 	@grep -Eq "^[[:space:]]*nextflowVersion[[:space:]]*=[[:space:]]*['\"]!>=25\\.04\\.0['\"]" nextflow.config || { \
@@ -73,6 +74,9 @@ manifest-stub: clean-ci-artifacts
 
 reference-cache-tests:
 	bash scripts/test_reference_cache.sh
+
+download-fallback-tests:
+	bash scripts/test_download_fallback.sh
 
 image-manifest-tests:
 	bash scripts/test_image_manifest.sh

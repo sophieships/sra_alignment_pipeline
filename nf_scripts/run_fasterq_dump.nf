@@ -18,7 +18,13 @@ process run_fasterq_dump {
     script:
     """
     prefetch ${download_status.SimpleName}
-    fasterq-dump ${download_status.SimpleName} --threads ${task.cpus} -b 100M -c 200M -m 4G
+    fasterq-dump ${download_status.SimpleName} --split-files --skip-technical --threads ${task.cpus} -b 100M -c 200M -m 4G
+
+    if [ ! -s ${download_status.SimpleName}_1.fastq ] || [ ! -s ${download_status.SimpleName}_2.fastq ]; then
+        rm -f ${download_status.SimpleName}_1.fastq ${download_status.SimpleName}_2.fastq
+        echo 'SRA Toolkit fallback did not produce a complete paired-end read set for ${download_status.SimpleName}; single-end input is not supported.' >&2
+        exit 1
+    fi
     """
 
     stub:

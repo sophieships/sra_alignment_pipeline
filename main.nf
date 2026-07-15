@@ -193,7 +193,7 @@ workflow {
         
         // run only when download_status is emitted from download_fastq
         run_fasterq_dump( download_fastq.out.download_status )
-        run_pigz( run_fasterq_dump.out.forward_reads.join( run_fasterq_dump.out.reverse_reads), download_fastq.out.download_status )
+        run_pigz( run_fasterq_dump.out.forward_reads.join( run_fasterq_dump.out.reverse_reads) )
 
         // mix the forward and reverse reads from download_fastq and run_pigz
         forward_reads = download_fastq.out.gzip_forward_reads.mix( run_pigz.out.gzip_forward_reads )
@@ -219,7 +219,7 @@ workflow {
 
         // run only when download_status is emitted from download_fastq
         run_fasterq_dump( download_fastq.out.download_status )
-        run_pigz( run_fasterq_dump.out.forward_reads.join(run_fasterq_dump.out.reverse_reads), download_fastq.out.download_status )
+        run_pigz( run_fasterq_dump.out.forward_reads.join(run_fasterq_dump.out.reverse_reads) )
 
         // mix the forward and reverse reads from download_fastq and run_pigz
         forward_reads = download_fastq.out.gzip_forward_reads.mix( run_pigz.out.gzip_forward_reads )

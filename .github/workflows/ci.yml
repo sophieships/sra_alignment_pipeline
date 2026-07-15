@@ -109,6 +109,9 @@ jobs:
       - name: Verify shared reference cache reuse
         run: bash scripts/test_reference_cache.sh
 
+      - name: Verify paired download fallback routing
+        run: bash scripts/test_download_fallback.sh
+
       - name: Run image manifest regression checks
         run: scripts/test_image_manifest.sh
 
