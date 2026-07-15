@@ -30,13 +30,29 @@ run_pipeline "$test_root/run-b"
     exit 1
 }
 
+default_outdir="$test_root/default-output"
+default_log="$test_root/default-cache.log"
+nextflow run "$repo_root/main.nf" \
+    --input_file "$repo_root/test_data/phage_smoke.csv" \
+    --cpus 1 \
+    --email test@example.com \
+    --outdir "$default_outdir" \
+    -profile docker \
+    -stub-run \
+    -work-dir "$test_root/default-work" \
+    -ansi-log false 2>&1 | tee "$default_log"
+
+grep -Fq "Using reference genome cache at ${default_outdir}/reference_genomes" "$default_log"
+[[ -e "$default_outdir/reference_genomes/NC_000866.4_reference.fasta.gz" ]] || {
+    echo "The implicit reference cache was not created beneath --outdir." >&2
+    exit 1
+}
+
 jq -e '.["$defs"].output_options.properties.reference_cache.type == "string"' \
     "$repo_root/nextflow_schema.json" >/dev/null
-grep -Fq 'reference_cache = "${params.outdir}/reference_genomes"' "$repo_root/main.nf"
-grep -Fq 'storeDir params.reference_cache' "$repo_root/nf_scripts/download_fasta.nf"
 if grep -rn 'results/' "$repo_root/nf_scripts"; then
     echo "Found a hard-coded results/ path in nf_scripts." >&2
     exit 1
 fi
 
-echo "Reference cache reused across distinct output directories."
+echo "Implicit and shared reference cache behavior verified."
