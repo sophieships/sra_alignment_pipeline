@@ -45,6 +45,7 @@ Please note the following:
 - For accessions with multiple SRRs, the given identifier will be associated with all SRRs (up to a maximum of 20).
 - If you need to extract more than 20 SRRs from a given SRA accession, please use [SRA-Explorer](https://sra-explorer.info/) or other appropriate tools.
 - To find an appropriate NCBI reference genome identifier, visit [NCBI Nucleotide](https://www.ncbi.nlm.nih.gov/nuccore) and perform a search like: "organism_name"[Organism] AND genome[All Fields].
+- The pipeline currently supports paired-end sequencing runs only. If neither ENA nor the SRA Toolkit fallback produces both read mates, the run fails with a clear error instead of silently dropping the sample. Single-end runs are not yet supported downstream.
 
 If both command line and CSV inputs are provided, the pipeline defaults to the CSV. The pipeline requires either command line or CSV input to run.
 

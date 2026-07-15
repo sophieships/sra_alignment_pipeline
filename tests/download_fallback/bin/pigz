@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+files=()
+while (($#)); do
+    case "$1" in
+        -f)
+            shift
+            ;;
+        -p)
+            shift 2
+            ;;
+        *)
+            files+=("$1")
+            shift
+            ;;
+    esac
+done
+
+for file in "${files[@]}"; do
+    printf 'pigz %s\n' "$file" >> "${FALLBACK_TOOL_LOG:?}"
+    gzip -c "$file" > "${file}.gz"
+    rm -f "$file"
+done

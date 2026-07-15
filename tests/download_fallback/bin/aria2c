@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+url="${*: -1}"
+target="${url##*/}"
+
+mode="${ARIA2_TEST_MODE:-success}"
+if [[ "$mode" == missing-forward && "$target" == *_1.fastq.gz ]] ||
+   [[ "$mode" == missing-reverse && "$target" == *_2.fastq.gz ]] ||
+   [[ "$mode" == missing-both ]]; then
+    printf 'partial\n' > "$target"
+    touch "${target}.aria2"
+    exit 1
+fi
+
+printf 'complete\n' > "$target"

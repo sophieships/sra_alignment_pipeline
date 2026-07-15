@@ -128,12 +128,13 @@ if (params.help) {
 validateParameters()
 
 // Resolve this default after command-line parameters have been applied so that
-// `--outdir custom-results` implies `custom-results/reference_genomes`. An
-// explicit --reference_cache remains independent of --outdir and can therefore
-// be reused by otherwise isolated runs.
-if (!params.reference_cache?.toString()?.trim()) {
-    params.reference_cache = "${params.outdir}/reference_genomes"
-}
+// `--outdir custom-results` implies `custom-results/reference_genomes`. Keep it
+// as an explicit value: mutating params here does not reliably propagate the
+// new value into included modules.
+def resolvedReferenceCache = normalizeParamValue(
+    params.reference_cache,
+    "${params.outdir}/reference_genomes"
+)
 
 // Residual cross-field check that a JSON schema cannot express: the pipeline
 // needs EITHER --input_file OR (--sra_accession AND --identifier). nf-schema
@@ -151,7 +152,7 @@ if ( params.input_file != '' && ( params.sra_accession != '' || params.identifie
 }
 
 log.info("Using container images from ${resolvedContainerRegistry}/${resolvedContainerNamespace}")
-log.info("Using reference genome cache at ${params.reference_cache}")
+log.info("Using reference genome cache at ${resolvedReferenceCache}")
 
 include { get_srrs } from './nf_scripts/get_srrs' addParams(container_image: resolvedContainerImages['sra_parser'])
 include { parse_srrs } from './nf_scripts/parse_srrs' addParams(container_image: resolvedContainerImages['sra_parser'])
@@ -159,7 +160,10 @@ include { download_fastq } from './nf_scripts/download_fastq' addParams(containe
 include { run_fasterq_dump } from './nf_scripts/run_fasterq_dump' addParams(container_image: resolvedContainerImages['sra_tools'])
 include { run_pigz } from './nf_scripts/run_pigz' addParams(container_image: resolvedContainerImages['pigz'])
 include { run_fastp } from './nf_scripts/run_fastp' addParams(container_image: resolvedContainerImages['fastp'])
-include { download_fasta } from './nf_scripts/download_fasta' addParams(container_image: resolvedContainerImages['biopython'])
+include { download_fasta } from './nf_scripts/download_fasta' addParams(
+    container_image: resolvedContainerImages['biopython'],
+    reference_cache: resolvedReferenceCache
+)
 include { run_bowtie2 } from './nf_scripts/run_bowtie2' addParams(container_image: resolvedContainerImages['bowtie2'])
 include { run_samtools } from './nf_scripts/run_samtools' addParams(container_image: resolvedContainerImages['samtools'])
 include { run_bcftools } from './nf_scripts/run_bcftools' addParams(container_image: resolvedContainerImages['bcftools'])
@@ -189,7 +193,7 @@ workflow {
         
         // run only when download_status is emitted from download_fastq
         run_fasterq_dump( download_fastq.out.download_status )
-        run_pigz( run_fasterq_dump.out.forward_reads.join( run_fasterq_dump.out.reverse_reads), download_fastq.out.download_status )
+        run_pigz( run_fasterq_dump.out.forward_reads.join( run_fasterq_dump.out.reverse_reads) )
 
         // mix the forward and reverse reads from download_fastq and run_pigz
         forward_reads = download_fastq.out.gzip_forward_reads.mix( run_pigz.out.gzip_forward_reads )
@@ -215,7 +219,7 @@ workflow {
 
         // run only when download_status is emitted from download_fastq
         run_fasterq_dump( download_fastq.out.download_status )
-        run_pigz( run_fasterq_dump.out.forward_reads.join(run_fasterq_dump.out.reverse_reads), download_fastq.out.download_status )
+        run_pigz( run_fasterq_dump.out.forward_reads.join(run_fasterq_dump.out.reverse_reads) )
 
         // mix the forward and reverse reads from download_fastq and run_pigz
         forward_reads = download_fastq.out.gzip_forward_reads.mix( run_pigz.out.gzip_forward_reads )
