@@ -2,8 +2,6 @@ process download_fastq {
     label 'process_low'
     maxForks 1
     container "${params.container_image}"
-    errorStrategy 'ignore'
-
     publishDir "${params.outdir}/${sra_accession}/fastq", mode: 'copy'
 
     input:

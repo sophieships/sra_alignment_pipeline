@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -u
 
 accession="$1"
 
@@ -19,30 +21,46 @@ echo "$ftp_link_2"
 echo "$ftp_link_3"
 echo "$ftp_link_4"
 
-if [ ! -f "${accession}_1.fastq.gz" ]; then
-    aria2c -x3 -s3 "$ftp_link_1" || echo "Download from ${ftp_link_1} failed"
-else
-    echo "File ${accession}_1.fastq.gz already exists, download not attempted."
+download_mate() {
+    local target="$1"
+    local primary_url="$2"
+    local alternate_url="$3"
+
+    if [[ -s "$target" && ! -e "${target}.aria2" ]]; then
+        echo "File ${target} already exists, download not attempted."
+        return 0
+    fi
+
+    rm -f "$target" "${target}.aria2"
+    if aria2c -x3 -s3 "$primary_url" && [[ -s "$target" && ! -e "${target}.aria2" ]]; then
+        return 0
+    fi
+
+    echo "Download from ${primary_url} failed"
+    rm -f "$target" "${target}.aria2"
+    if aria2c -x3 -s3 "$alternate_url" && [[ -s "$target" && ! -e "${target}.aria2" ]]; then
+        return 0
+    fi
+
+    echo "Download from ${alternate_url} failed"
+    rm -f "$target" "${target}.aria2"
+    return 1
+}
+
+forward_ok=false
+reverse_ok=false
+if download_mate "${accession}_1.fastq.gz" "$ftp_link_1" "$ftp_link_3"; then
+    forward_ok=true
+fi
+if download_mate "${accession}_2.fastq.gz" "$ftp_link_2" "$ftp_link_4"; then
+    reverse_ok=true
 fi
 
-if [ ! -f "${accession}_2.fastq.gz" ]; then
-    aria2c -x3 -s3 "$ftp_link_2" || echo "Download from ${ftp_link_2} failed"
+status_file="${accession}.txt"
+if [[ "$forward_ok" == true && "$reverse_ok" == true ]]; then
+    rm -f "$status_file"
 else
-    echo "File ${accession}_2.fastq.gz already exists, download not attempted."
-fi
-
-if [ ! -f "${accession}_1.fastq.gz" ]; then
-    aria2c -x3 -s3 "$ftp_link_3" || echo "Download from ${ftp_link_3} failed"
-else
-    echo "File ${accession}_1.fastq.gz already exists, download not attempted."
-fi
-
-if [ ! -f "${accession}_2.fastq.gz" ]; then
-    aria2c -x3 -s3 "$ftp_link_4" || echo "Download from ${ftp_link_4} failed"
-else
-    echo "File ${accession}_2.fastq.gz already exists, download not attempted."
-fi
-
-if [ ! -f "${accession}_1.fastq.gz" ]; then
-    echo "Download failed for ${accession}" > ${accession}.txt
+    rm -f "${accession}_1.fastq.gz" "${accession}_1.fastq.gz.aria2"
+    rm -f "${accession}_2.fastq.gz" "${accession}_2.fastq.gz.aria2"
+    printf 'ENA download unavailable; use SRA Toolkit fallback for %s\n' "$accession" > "$status_file"
 fi
