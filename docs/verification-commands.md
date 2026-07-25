@@ -1,26 +1,13 @@
 # Verification Commands
 
-Last reviewed: 2026-05-13.
+`make help` is the authoritative target list; run everything from the repository root.
+This file records only the CI-mapping facts `make` can't express.
 
-Use these commands from the repository root when you want a local replacement
-for GitHub Actions.
-
-## Local Command Matrix
-
-| Area | Command | What it verifies |
-| --- | --- | --- |
-| Pipeline parse | `make pipeline-check` | `nextflow run main.nf --help` succeeds |
-| Manifest failures | `make manifest-validation` | Invalid image manifests fail with readable errors |
-| Stub run | `make manifest-stub` | Stub execution emits manifest-derived container refs |
-| Manifest script tests | `make image-manifest-tests` | Image manifest regression script |
-| Build orchestration tests | `make build-images-tests` | `build_images.sh` orchestration regression script |
-| Full local CI | `make ci` | Local equivalent of `.github/workflows/ci.yml` |
-
-## CI Mapping
-
-| Workflow | Local equivalent |
-| --- | --- |
-| `.github/workflows/ci.yml` | `make ci` |
-
-Install Nextflow before running `make ci`. The local target keeps the GitHub
-workflow behavior but does not install tools for you.
+- **Full local CI:** `make ci` — the local equivalent of `.github/workflows/ci.yml`. Its
+  prerequisite list in the Makefile is always current (currently: `nextflow-version-check
+  pipeline-check manifest-validation manifest-stub reference-cache-tests
+  download-fallback-tests image-manifest-tests build-images-tests`).
+- Install Nextflow before running `make ci`; the local target keeps the GitHub workflow
+  behavior but does not install tools for you.
+- Individual areas map 1:1 to the `ci:` prerequisites — run one target when iterating on
+  that area (e.g. `make manifest-validation` for manifest error messages).

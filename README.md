@@ -32,6 +32,8 @@ SRA Alignment Pipeline
 
 The repository's `make` targets call the `nextflow` executable installed in your current environment; they do not download the CI-pinned version. Before running `make ci`, confirm that `nextflow -version` reports Nextflow 25.04 or newer. Older versions stop immediately with the pipeline's minimum-version requirement instead of attempting plugin resolution.
 
+To verify changes locally, `make ci` mirrors the GitHub workflow; see [docs/verification-commands.md](docs/verification-commands.md) for the CI mapping.
+
 ## Input Data
 
 The pipeline accepts input data in two ways:
